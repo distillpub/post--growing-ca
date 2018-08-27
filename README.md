@@ -1,8 +1,8 @@
 # Distill post--example
 
-Distill articles usually depend on [distillpub/template](https://github.com/distillpub/template). Template is built to allow you to sue any web development workflow you'd like. But what id you don't have strong opinions on that and just want something that works out of the box? 
+Distill articles depend on [distillpub/template](https://github.com/distillpub/template) for styling and some functionality such as footnotes, citations, and math rendering. We built template as a standalone library of styles and [webcomponents](https://www.webcomponents.org/) to allow you to use any web development workflow you'd like. But what if you don't have strong opinions about that and just want a starter kit that works out of the box? This is such a starter kit.
 
-This is using `webpack` for bundling, `svelte` & `svelte-loader` to build interactive components/diagrams, and `ejs` to inline SVGs.
+This is using `webpack` for bundling, `svelte` & `svelte-loader` to build interactive components/diagrams, and `ejs` to inline SVGs—the same technology choices we used when building ambitious articles such as [Building Blocks of Interpretability](https://distill.pub/2018/building-blocks).
 
 ## Get started
 
