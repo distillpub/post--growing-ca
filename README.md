@@ -20,6 +20,16 @@ Fork and rename, or simply copy this repository.
 
 Components and diagrams are stored in `src`. The `.html` files are [svelte](https://svelte.technology/guide) components, the `.js` files are compilation endpoints that are also defined in `webpack.config.js`. These compiled endpoints are then consumed by hand authored `.ejs` files in `src`, such as `index.ejs` which contains your content. For most articles you can simply use the provided `index.ejs` for your text, `index.js` to instantiate diagrams, and `.html` svelte files to create them.
 
+## Submitting to Distill
+
+You can find detailed information on submitting to Distill [on the journal website](https://distill.pub/journal/). As part of the review process you may be asked to share a version of your submission with reviewers. To give Distill read access to build and host your submission, please add the Github user `distillpub-reviewers` to your repository. Within around a day a member of the editorial staff will accept the invite, which will allow us to host your article (unlisted) on `drafts.distill.pub` and share it with reviewers on your behalf.
+
+If your repository is hosted by an **organization account**, you can give `distillpub-reviewers` admin access and it will automatically install webhooks that trigger a redeploy when you push changes. 
+
+If repository is hosted by a **personal account** for your repository, drafts will attempt to rebuild your submission once a day. Alternatively you can contact Distill to ask for a repository under the `distillpub` Github organization.
+
+Additional information and first troubleshooting steps are [listed in the `drafts` repository's README](https://github.com/distillpub/drafts). You can also get in touch with the editorial team for help via email, or [on the Distill Community Slack workspace].(https://join.slack.com/t/distillpub/shared_invite/enQtMzg1NzU3MzEzMTg3LWJkNmQ4Y2JlNjJkNDlhYTU2ZmQxMGFkM2NiMTI2NGVjNzJkOTdjNTFiOGZmNDBjNTEzZGUwM2U0Mzg4NDAyN2E)
+
 
 ## Feedback
 
