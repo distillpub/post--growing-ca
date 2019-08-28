@@ -28,7 +28,7 @@ If your repository is hosted by an **organization account**, you can give `disti
 
 If repository is hosted by a **personal account** for your repository, drafts will attempt to rebuild your submission once a day. Alternatively you can contact Distill to ask for a repository under the `distillpub` Github organization.
 
-Additional information and first troubleshooting steps are [listed in the `drafts` repository's README](https://github.com/distillpub/drafts). You can also get in touch with the editorial team for help via email, or [on the Distill Community Slack workspace].(https://join.slack.com/t/distillpub/shared_invite/enQtMzg1NzU3MzEzMTg3LWJkNmQ4Y2JlNjJkNDlhYTU2ZmQxMGFkM2NiMTI2NGVjNzJkOTdjNTFiOGZmNDBjNTEzZGUwM2U0Mzg4NDAyN2E)
+Additional information and first troubleshooting steps are [listed in the `drafts` repository's README](https://github.com/distillpub/drafts). You can also get in touch with the editorial team for help via email, or [on the Distill Community Slack workspace](https://join.slack.com/t/distillpub/shared_invite/enQtMzg1NzU3MzEzMTg3LWJkNmQ4Y2JlNjJkNDlhYTU2ZmQxMGFkM2NiMTI2NGVjNzJkOTdjNTFiOGZmNDBjNTEzZGUwM2U0Mzg4NDAyN2E).
 
 
 ## Feedback
