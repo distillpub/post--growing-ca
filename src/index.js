@@ -1,13 +1,13 @@
-import VisualTOC                      from './diagrams/VisualTOC.html';
+// Hot reloading
+import * as _unused from "raw-loader!./index.ejs";
+// TODO: disable before publishing
 
-// eagerly initialize vtoc  as it's above the fold
-const tocNav = document.getElementById('vtoc');
-const visualTOC = new VisualTOC({target: tocNav});
+import Example from "./diagrams/svelte-example.svelte";
 
 // lazily initialize any diagram below the fold. E.G:
-// {
-//   const figure = document.getElementById('StyleTransferExamples');
-//   figure.addEventListener("ready", function() {
-//     const styleTransferExamples = new StyleTransferExamples({target: figure});
-//   });
-// }
+const exampleTag = document.getElementById("svelte-example-dfigure");
+let example;
+exampleTag.addEventListener("ready", () => {
+	const target = exampleTag.querySelector("#svelte-example-target");
+	example = new Example({ target });
+});
