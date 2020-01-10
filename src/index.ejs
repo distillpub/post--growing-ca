@@ -1,3 +1,4 @@
+
 <!doctype html>
 
 <head>
@@ -5,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://distill.pub/template.v2.js"></script>
   <style>
-    <%=require("raw-loader!../static/style.css") %>
   </style>
 </head>
 
@@ -13,16 +13,23 @@
 
   <d-front-matter>
     <script type="text/json">{
-      "title": "Distill Example",
-      "description": "An example project using Webpack, Babel, and Svelte.",
-      "password": "svgs",
+      "title": "Growing Cellular Automata",
+      "description": "Differentiable Self-Organisation: Cellular Automata model of Morphogenesis.",
+      "password": "",
       "authors": [
         {
-          "author": "Ludwig Schubert",
-          "authorURL": "https://schubert.io/",
-          "affiliation": "OpenAI",
-          "affiliationURL": "https://openai.com"
+          "author": "Alexnader Mordvintsev",
+          "authorURL": "https://znah.net/",
+          "affiliation": "Google",
+          "affiliationURL": "https://ai.google/"
+        },
+        {
+          "author": "Ettore Randazzo",
+          "authorURL": "",
+          "affiliation": "Google",
+          "affiliationURL": "https://ai.google/"
         }
+
       ],
       "katex": {
         "delimiters": [
@@ -41,323 +48,183 @@
     }</script>
   </d-front-matter>
 
-  <d-title>
-    <h1>Distill Example</h1>
-    <p>An example project using Webpack, Babel, and Svelte. </p>
-  </d-title>
+<d-title>
+<h1>Growing Cellular Automata</h1>
+<p>Differentiable Model of Morphogenesis</p>
+</d-title>
+<d-article><p><b>Please propose edits in the Google Docs <a href="https://docs.google.com/document/d/11UnoVOWPncooSMQFqBigcLzP-dVyalmgrLa2pWFxhuM">version of this document</a>.</b></p>
 
-  <d-article>
+<p><video loop autoplay muted>
+  <source src="figures/teaser.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+</p>
+<p><strong>ROUGH DRAFT - We’re sharing this draft with individuals for comments. Please ask for permission before circulating it more broadly.</strong></p>
 
-    <p>
-      Welcome to a Distill example article: meant to get you writing up your research quickly. Let's demo some
-      features:
-    </p>
+<p>All multicellular organisms begin their life as a single egg cell. Being able to build their own bodies is probably the most fundamental skill every living creature possesses. Morphogenesis (the process of an organism shape development) is one of the most striking examples of self-organisation. Cells, tiny building blocks of bodies, communicate with their neighbors to decide the shape of organs and bodyplans, where to grow each organ, how to interconnect them, and when to eventually stop.</p>
 
-    <h4>Hot reloading</h4>
-    <p>Your browser can automatically refresh when your editor saves. This should work by default, and you can disable
-      it in <code>index.js</code>. Sometimes hot reloading isn't fully compatible with all types of code, so you may
-      need to try manually reloading if you're seeing inconsistent behavior.</p>
+<p>This process is amazingly robust to perturbations. Even when the organism is fully developed, it still has the capability to repair damages, known as regeneration. Some creatures can fully regenerate vital organs, limbs, eyes, or even parts of the brain! Morphogenesis is a surprisingly adaptive process. Sometimes even a very atypical development process can result in a viable organism - for example, the parts of an early embryo cut into pieces will each form a complete individual - monozygotic twins!</p>
 
-    <h4>Inlined SVGs</h4>
-    <p>SVGs are so small that it can be nice to save an extra request and simply inline them intop your HTML:</p>
+<p>Imagine if we could design systems of such plasticity and robustness: structures and machines that could grow and repair themselves. Biologists still do not fully understand the algorithms thatsufficient to enable cells to cooperate toward anatomical goals.; tTo help crack the puzzle of the morphogenetic code, and also exploit the insights of biology to create self-repairing systems in real life, we may try to replicate some of the desired properties in an <i>in silico</i> experiment.</p>
 
-    <figure>
-      <%= require("../static/diagrams/diffparam.svg") %>
-    </figure>
+<p>The idea of modelling large-scale phenomena by simulating tiny local interactions found its way into engineering and scientific practice in the form of partial derivative equation systems (PDEs) and numerical methods for solving them, particle systems, and various kinds of Cellular Automata.</p>
 
-    <style>
-      #arrow-2 #arrow-head {
-        fill: steelblue;
-      }
+<p>We will focus on Cellular Automata models. TheseCA typically consists of a grid of cells being iteratively updated, following the same set of rules applied to each cell on every step. The new state of a cell depends only on the states of cells in its tiny neighborhood. Despite the apparent simplicity, CAs often demonstrate rich, interesting behaviours, and have a long history of application to biological phenomena modeling.</p>
 
-      #arrow-2 #arrow-line {
-        stroke: steelblue;
-      }
-    </style>
+<p>Let’s try to develop a cellular automata update rule that will, starting from a single cell, produce a predefined multicellular pattern on a 2D grid. This may be seen as a toy model of organism development. To design the CA, we must specify the possible cell states, and their update function. Typical CA models represent cell states with a set of discrete values, although variants using vectors of continuous values exist. The use of continuous values has the virtue of allowing the update rule to be a differentiable function of a cell’s neighbourhood state. The rules that guide individual cell behavior based on local environment is the kind of low-level hardware specification that is encoded by the genome of an organism. Our model will reveal the patterning behavior that is enabled by such hardware.</p>
 
-    <p>Let's use some CSS to style an inlined SVG. Here's an arrow
-      <svg width="27px" height="9px" viewBox="0 0 27 9" version="1.1" xmlns="http://www.w3.org/2000/svg"
-        xmlns:xlink="http://www.w3.org/1999/xlink">
-        <g id="arrow" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-          <g id="Group" transform="translate(-0.195652, 0.0)">
-            <path d="M10.5,4.5 L26.8913043,4.5" id="arrow-line" stroke="#FF6600" stroke-width="2"
-              stroke-linecap="square" stroke-dasharray="6,4"></path>
-            <g id="arrow-head" transform="translate(5.0, 4.5) scale(-1, 1) translate(-5.0, -4.5) translate(0.5, 0.0)"
-              fill="#FF6600" fill-rule="nonzero">
-              <path
-                d="M4.5,0 C5.67007294,3.25202425 6.85281213,6.29180565 9,9 L4.5,7.3125 L0,9 C2.13530145,6.28972675 3.34126793,3.24998975 4.5,0 Z"
-                id="Shape" transform="translate(4.5, 4.5) rotate(-270.0) translate(-4.5, -4.5) "></path>
-            </g>
-          </g>
-        </g>
-      </svg> that we
-      can make
-      inline. If you'd like to change the color in CSS, we can do so. Let's put the second arrow (<span
-        id="arrow-2"><svg width="27px" height="9px" viewBox="0 0 27 9" version="1.1" xmlns="http://www.w3.org/2000/svg"
-          xmlns:xlink="http://www.w3.org/1999/xlink">
-          <g id="arrow" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-            <g id="Group" transform="translate(-0.195652, 0.0)">
-              <path d="M10.5,4.5 L26.8913043,4.5" id="arrow-line" stroke="#FF6600" stroke-width="2"
-                stroke-linecap="square" stroke-dasharray="6,4"></path>
-              <g id="arrow-head" transform="translate(5.0, 4.5) scale(-1, 1) translate(-5.0, -4.5) translate(0.5, 0.0)"
-                fill="#FF6600" fill-rule="nonzero">
-                <path
-                  d="M4.5,0 C5.67007294,3.25202425 6.85281213,6.29180565 9,9 L4.5,7.3125 L0,9 C2.13530145,6.28972675 3.34126793,3.24998975 4.5,0 Z"
-                  id="Shape" transform="translate(4.5, 4.5) rotate(-270.0) translate(-4.5, -4.5) "></path>
-              </g>
-            </g>
-          </g>
-        </svg></span>) in a tag with an ID, so we can
-      target it in CSS.
+<p>So, what is so special about differentiable update rules? They will allow us to use the powerful language of loss functions to express our wishes, and the developed machinery of gradient-based numerical optimization to fulfill them.! The art of stacking together differentiable functions, and optimizing their parameters to perform various tasks, has a long history. In recent years it has flourished under various names, such as (Deep) Neural Networks, Deep Learning or Differentiable Programming.</p>
+<h2>Experiment 1: Learning to Grow</h2>
+<p><img src="figures/cell_state.svg"></p>
 
-      <d-code block="" language="css">
-        #arrow-2 #arrow-head {
-        fill: steelblue;
-        }
+<p><strong>Cell state.</strong> We will represent each cell state as a vector of 16 real values (see the figure above). The first three channels represent the cell color (RGB). The target pattern has color channel values in range [0.0, 1.0] and alpha equal to 1.0 for foreground pixels, and 0.0 for background. </p>
 
-        #arrow-2 #arrow-line {
-        stroke: steelblue;
-        }
-      </d-code>
+<p>The alpha channel (A) has a special meaning: it marks living cells, belonging to the currently grown pattern. In particular, cells having alpha>0.1, and their neighbors, are considered “living”, while other cells are empty, and have all state values explicitly set to zero at every step. Thus cells with alpha>0.1 can be thought of as “mature”, while their neighbors with alpha<=0.1 are “growing”, and can become mature if their alpha reaches the threshold.</p>
 
-    </p>
+<p>Hidden channels don’t have a predefined meaning, and it’s up to the update rule to decide what to use them for. They can be interpreted as concentrations of some chemicals, electric potentials or some other signaling mechanism that are used by cells to orchestrate the growth. We may think that all cells share the same genome (update rule), and their differentiation is encoded in the state vector.</p>
 
-    <h4>Formulas</h4>
+<p><img src="figures/step_flow.svg"></p>
 
-    <p>Here's a test of an inline equation <d-math>c = a^2 + b^2</d-math>. Can also be used with configurable katex
-      settings, for example by
-      using inline <code>$</code> signs: <d-math>x^2</d-math>. There are also block equations:</p>
-    <d-math block="">
-      c = \pm \sqrt{ \sum_{i=0}^{n}{a^{222} + b^2}}
-    </d-math>
-    <p>Math can also be quite involved:</p>
-    <d-math block="">
-      \frac{1}{\Bigl(\sqrt{\phi \sqrt{5}}-\phi\Bigr) e^{\frac25 \pi}} = 1+\frac{e^{-2\pi}} {1+\frac{e^{-4\pi}}
-      {1+\frac{e^{-6\pi}} {1+\frac{e^{-8\pi}} {1+\cdots} } } }
-    </d-math>
+<p><strong>Update rule.</strong> Now it’s time to define the update rule. Our CA runs on a regular 2d grid of 16-dim vectors, essentially a 3d array of shape [height, width, 16]. We want to apply the same operation to each cell, and the result of this operation can only depend on the small (say 3x3) neighborhood of the cell. This is heavily reminiscent of the convolution operation, one of the cornerstones of signal processing and differential programming. Convolution is a linear operation, but it can be combined with other per-cell operations to produce a complex update rule, capable of learning the desired behaviour. Our cell update rule can be split into the following phases, applied in order:</p>
 
-    <p>We've also been experimenting with <a
-        href="https://github.com/distillpub/template/wiki/Annotated-Formulas">annotated formulas</a>:</p>
+<ul><li><strong>Perception.</strong> We use the 3x3 convolution with a fixed kernel. We could of course learn the perception kernel coefficients, but decided to apply fixed operations, motivated by the fact that real life cells often rely on chemical gradients to guide the organism development. Thus, we are using classical Sobel filters to estimate the partial derivatives of cell state channels in x- and y- directions, forming a 2d gradient vector for each state channel. We concatenate those gradients with the cells own states, forming a 16*2+16=48 dimensional <i>perception vector</i>.</li></ul></ul>
 
-    <style>
-      .eq-grid {
-        display: grid;
-        justify-content: start;
-        grid-row-gap: 10px;
-      }
+<ul><li><strong>Update computation.</strong> The perception vector undergoes a sequence of per-cell operations, that consists of typical differentiable programming building blocks, such as 1x1-convolutions and ReLU nonlinearities. We use in networks having approximately 8k parameters. Inspired by residual neural networks, we compute the incremental update to the current state. That’s why the last convolution has a special treatment: its coefficients are zero-initialized, because we wanted the network to have do-nothing initial behaviour. ReLU is also not applied to the output of the last layer, as we don’t want to restrict it to non-negative values only.</li></ul></ul>
 
-      .eq-grid figcaption d-math {
-        font-size: 100%;
-      }
+<ul><li><strong>Stochastic cell update.</strong> Typical cellular automata update all cells simultaneously. This implies the existence of a global clock, synchronizing all cells. Relying on global synchronisation is not something one expects from a self-organising system. We relax this requirement by assuming that each cell performs an update independently, waiting for a random time interval between updates. To model this behaviour we apply a random per-cell mask to update vectors, setting all update values to zero with some predefined probability (we use 0.5 during training). This operation can be also seen as an application of per-cell dropout to update vectors.</li></ul></ul>
 
-      .eq-grid .expansion-marker {
-        border: 1px solid #CCC;
-        border-bottom: none;
-        height: .5em;
-        width: 100%;
-      }
-    </style>
+<ul><li><strong>Living cell masking.</strong> We want to model the growth process that starts with a single cell, and don’t want empty cells to participate in computations or carry any hidden state. We enforce this by explicitly setting all channels of empty cells to zeros. A cell is considered empty if there is no “mature” (alpha>0.1) cell in its 3x3 neightborhood.</li></ul></ul>
 
-    <figure class="eq-grid">
+<p><img src="figures/train_flow.svg"></p>
+<p><strong>Training strategy.</strong> We are going to initialize the grid with zeros, except a single seed cell in the center, which will have all channels except RGB set to one. We set RGB channels to zeros because we want the seed point to be viwith alpha<=0.1sible on the white background.</p>
 
-      <div style="grid-row: 1; grid-column: 1;">
-        <d-math> C ~~~=~~~~ </d-math>
-      </div>
-      <div style="grid-row: 1; grid-column: 2;">
-        <d-math> H^E_D(X, Z) </d-math>
-      </div>
-      <div style="grid-row: 1; grid-column: 3;">
-        <d-math> ~~~-~~~ </d-math>
-      </div>
-      <div style="grid-row: 1; grid-column: 4;">
-        <d-math> H^E_E(X, Z) </d-math>
-      </div>
+<p>Once the grid is initialized, we can iteratively apply the update rule. We sample a random number of CA steps from the [64, 96] range for each training step, as we want the pattern to be stable across a number of iterations. This should be a sufficient number of steps to grow the pattern of the size we work with (40x40), even considering the stochastic nature of our update rule.</p>
 
+<p>At the last step we apply pixel-wise L2 loss between RGBA channels in the grid and the target pattern. This loss can be differentiably optimized with respect to the update rule parameters by backpropagation-over-time, the standard method of training recurrent neural networks.</p>
 
-      <div class="expansion-marker" style="grid-row: 2; grid-column: 4 / 7; "></div>
+<p><strong>First attempt.</strong> Once the optimisation converges, we can run simulations to see how our learned CA grows the butterfly, starting from the seed cell. Let’s see what happens when we run it for longer than the number of steps used during training. The animation below shows the behaviour of a few different models, trained to generate different emoji patterns.</p>
 
-      <div style="grid-row: 3; grid-column: 1;">
-        <d-math> ~~~~~~~=~~~~ </d-math>
-      </div>
-      <div style="grid-row: 3; grid-column: 2;">
-        <d-math> H^E_D(X, Z) </d-math>
-      </div>
-      <div style="grid-row: 3; grid-column: 3;">
-        <d-math> ~~~-~~~ </d-math>
-      </div>
-      <div style="grid-row: 3; grid-column: 4;">
-        <d-math> H^E_E(Z | X) </d-math>
-      </div>
-      <div style="grid-row: 3; grid-column: 5;">
-        <d-math> ~~~-~~~ </d-math>
-      </div>
-      <div style="grid-row: 3; grid-column: 6;">
-        <d-math> H^E_E(X) </d-math>
-      </div>
+<p>    <video loop autoplay muted>
+      <source src="figures/unstable.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+</p>
 
-      <figcaption style="grid-row: 4; grid-column: 4; max-width:135px;">
-        Bits to represent <d-math>z</d-math><br> if you already know <d-math>x</d-math>.
-      </figcaption>
-      <figcaption style="grid-row: 4; grid-column: 6; max-width:120px;">
-        Bits to represent<br>
-        <d-math>x</d-math> by itself.
-      </figcaption>
+<p>We can see that different training runs can lead to models with drastically different long term behaviours. Some tend to die out, some don’t seem to know how to stop growing, but some happen to be almost stable! How can we steer the training towards producing persistent patterns all the time?</p>
+<h2>Experiment 2: What persists, exists</h2>
+<p>One possible strategy to prevent the grown pattern from exploding or dying out, could be running the CA update for more iterations, periodically applying the loss against the target, and training the system by backpropagation through longer time intervals. This would unfortunately substantially increase the training time and memory requirements. We are using a different strategy instead, that can be summarized with the following pseudocode:</p>
 
-    </figure>
+<ul><li>Initialize the pool with pool_size(=1024) seed patterns</li></ul>
+<li>For each training step</li>
+<ul><li>Sample a batch of (eight) patterns from the pool</li></ul>
+<li>Replace one of the sampled patterns for the seed</li>
+<li>Iterate CA update for a number of steps, starting from the sampled batch</li>
+<li>Apply the target loss function to final patterns, produced by the CA run</li>
+<li>Use the gradient of loss over CA parameters to perform the training step</li>
+<li>Put final patterns back to the pool, replacing the sampled ones</li></ul>
 
-    <h4>Citations</h4>
+<p>Essentially, using the previous final states as new starting points forces CA to learn how to persist or even improve an already formed pattern, in addition to being able to grow it from a seed. We also noticed that reseeding the highest loss sample (instead of a random one) in the batch, instead of a random one, makes training more stable at the initial stages, as it helps to clean up the low quality states from the pool from low quality states.</p>
 
-    <p>We can<d-cite key="mercier2011humans"></d-cite> also cite <d-cite
-        key="gregor2015draw,mercier2011humans,openai2018charter"></d-cite> external publications. <d-cite
-        key="dong2014image,dumoulin2016guide,mordvintsev2015inceptionism"></d-cite>. We should also be testing
-      footnotes
-      <d-footnote id="d-footnote-1">This will become a hoverable footnote. This will become a hoverable footnote. This
-        will become a
-        hoverable footnote. This will become a hoverable footnote. This will become a hoverable footnote. This will
-        become a hoverable footnote. This will become a hoverable footnote. This will become a hoverable footnote.
-      </d-footnote>. There are multiple footnotes, and they appear in the appendix<d-footnote id="d-footnote-2">Given I
-        have coded them
-        right. Also, here's math in a footnote: <d-math>c = \sum_0^i{x}</d-math>. Also, a citation. Box-ception<d-cite
-          key="gregor2015draw"></d-cite>!</d-footnote> as well.</p>
+<p>Here is what a typical training progress of CA rule looks like. It learns to stabilize the pattern in parallel with refining its features.</p>
+
+<p>    <video loop autoplay muted>
+      <source src="figures/train_steps_damage_0.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+</p>
+<p>CA behaviour at training steps 100, 500, 1000, 4000.</p>
+<h2>Experiment 3: Learning to regenerate</h2>
+<p>In addition to being able to grow their own bodies, living creatures are great at maintaining them. Not only worn out skin gets replaced with new, but very heavy damages to complex vital organs can be regenerated by some creatures. Is there a chance that some of the models we trained above have regenerative capabilities?</p>
+
+<p>    <video loop autoplay muted>
+      <source src="figures/regen1.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+</p>
+<p>The video above shows three different models trained using the same settings. We let each of models develop a pattern for 100 steps, and then damage it in five different ways: by removing different halves of the formed pattern, and by cutting out a square from the center. Once again, we see that these models show quite different out-of-training mode behaviour. “Model 3” has even developed quite strong regenerative capabilities, without being explicitly trained for it! </p>
+
+<p>Let’s steer the training towards producing more regeneration-capable models. We will do this by damaging a few pool-sampled states before each training step.</p>
+
+<p>    <video loop autoplay muted>
+      <source src="figures/batches.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+</p>
+<p>The video above shows training progress, which includes sample damage. We sample 8 states from the pool. Then we replace the highest-loss sample (leftmost) with the seed, and damage three lowest-loss (rightmost) states by setting a random circular region to zeros. The bottom row shows states after CA iterations applied. These states get injected back into the pool.</p>
+
+<p>All the models we trained with the above method could easily recover damages we tried at the beginning of this chapter. We decided to try a heavier set of disturbances to get the feeling the limits of model generalisation.</p>
+
+<p>    <video loop autoplay muted>
+      <source src="figures/regen2.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+</p>
+<p>Models that were exposed to damages during training are much more robust. The last two columns show examples of damages that are not just setting cells to zero: filling the center with random values sampled from [0, 1] interval, and seeding the pattern with two seeds instead of one (horizontally separated by 7 empty pixels). Surprisingly some for models we trained could handle this type of ambiguity.</p>
+<h2>Playing with CA</h2>
+<p>We implemented the TF.js playground that allows the user to interact with CA models we trained by planting new seeds or damaging them.</p>
+<h3>Hidden states</h3>
+<p>The image below shows the distribution of state channel values across the converged pattern, produced by one of our models. The first 4 channels correspond to RGB and alpha mask. The rest are hidden states that cells use to coordinate the growth. Red corresponds to positive, and blue to negative values.</p>
+
+<p><img src="figures/states.png"></p>
+<h3>Rotating the pattern</h3>
+<p>We model the cell perception by estimating gradient vectors of state channels with Sobel filters. One can also think that each agent has two sensors that perceive directional derivatives of state vectors across its neighborhood along x and y axes. What happens if we rotate those sensors? We can do this by replacing Sobel kernels with their 2D rotation matrix-weighted counterparts.</p>
+<p><d-math block="">
+  \begin{bmatrix}
+  K_x \\
+  K_y
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+  \cos \theta &  -\sin \theta \\
+  \sin \theta &  \cos \theta
+  \end{bmatrix} 
+  *
+  \begin{bmatrix}
+  Sobel_x \\
+  Sobel_y
+  \end{bmatrix}
+</d-math></p>
+<p>This simple modification of the perception stage produces rotated versions of the pattern without retraining the model!</p>
+<p><img src="figures/rotation.png"></p>
+<h3>Asynchronous CAs, ODEs and PDEs</h3>
+<p>As the reader may remember, we are updating a random fraction of cells at each iteration, claiming that this removes the dependence on global synchronization between cells. Let’s bring those claims to trial! One way to test it is to compare the behaviour of models trained with and without probabilistic the update under various update probabilities.</p>
+
+<p>Let’s try to train the model in the regime when all cells get updated at each iteration, and see if it will work</p>
+
+<h2>Related work</h2>
+<p>A number of researchers applied CA to modelling of embryogenesis and regeneration. For example J. Miller <d-cite key="Miller2004"></d-cite> proposed a very similar experiment setup, using evolutionary algorithms to design a CA rule that could build and regenerate French flag, starting from a seed cell.</p>
 
 
-    <h4>Displaying code</h4>
-    <p>Some inline javascript:<d-code language="javascript">var x = 25;</d-code>. And here's a javascript code block.
-    </p>
+<h3>Artificial Self-Organising systems</h3>
+<h3>CA and PDEs</h3>
+<p>There exists a giant body of literature that describes various flavours of cellular automata and PDE systems, and their applications to modelling physical, biological or even social systems. We will list a few prominent examples, that inspired this work:</p>
 
-    <d-code block="" language="javascript">
-      var x = 25;
-      function(x){
-      return x * x;
-      }
-    </d-code>
-    <p>We also support some highlighting.</p>
-    <d-code block="" language="python">
-      # Python 3: Fibonacci series up to n
-      def fib(n):
-      a, b = 0, 1
-      while a &lt; n: print(a, end=' ' ) a, b=b, a+b </d-code>
+<ul><li>Von Neumann Cellular Automaton</li></ul>
+<li>Turing Patterns</li>
+<li>Conway’s Game of Life</li>
+<li>Gray-Scott Reaction-Diffusion</li>
+<li>SmoothLife</li>
+<li>Lenia - Biology of Artificial Life</li></ul>
 
-    <h4>Tables</h4>
-    <p>We have simple tables that try to stay readable at most screen sizes:
-    </p>
+<p>A number of researches were using evolutionary algorithms to find CA rules that reproduce predefined patterns: <u>1</u>, <u>2</u>.</p>
+<h3>Neural Networks and Self-Organisation</h3>
+<p>The close relation between Convolutional Neural Networks and Cellular Automata was already observed by a number of researchers <d-cite key="wulff1993learning, Gilpin2018CellularAA"></d-cite>. The connection is so strong it allowed us to build Neural CA models using components, readily available in popular ML frameworks. Thus, using a different jargon, our Neular CA can also be named Recurrent Residual Convolutional Networks.</p>
 
-    <style>
-      #example-table {
-        overflow-x: scroll;
-      }
+<p>Neural GPU <d-cite key="Kaiser2015NeuralGPU, Freivalds2017ImprovingTN"></d-cite> offers a computational architecture very similar to ours, but applied in the context of multiplication and sorting algorithm learning.</p>
 
-      #example-table th {
-        white-space: nowrap;
-      }
+<p>Looking more broadly, we think that the concept of self-organisation is finding its way into mainstream machine learning with popularisation of Graph Neural Network <d-cite key="wu2019comprehensive"></d-cite> models. Typically GNNs run a repeated computation across vertices of a (possibly dynamic) graph. Vertices communicate locally through graph edges, and aggregate global information required to perform the task over multiple rounds of message exchanges. As if atoms talk to each other to figure out properties of a molecule <d-cite key="NIPS2015_5954"></d-cite>, or points of the point cloud talk to their neighbors to figure out their global shape <d-cite key="Wang_2019"></d-cite>.</p>
 
-      #example-table tbody th {
-        font-weight: initial;
-        border-bottom: 1px solid rgb(242, 242, 242);
-      }
+</d-article>
+<d-appendix>
+<h3>Acknowledgments</h3>
+<p>Michael Levin, Bert Chan, Mark Sandler, Blaise, Andrew Jackson (proofreading)</p>
 
-      #example-table tbody tr:last-of-type th {
-        border-bottom: inherit;
-      }
+<h3>Author Contributions</h3>
 
-      #example-table td,
-      #example-table thead th {
-        text-align: center;
-      }
+<!-- References -->
+<d-footnote-list></d-footnote-list>
+<d-citation-list></d-citation-list>
+<d-appendix>
 
-      #example-table td {
-        border-color: rgb(242, 242, 242);
-      }
-
-      #example-table td.no {
-        background-color: #f6f6f6;
-      }
-    </style>
-    <table id="example-table">
-      <thead>
-        <tr>
-          <th></th>
-          <th scope="col">Parallel</th>
-          <th scope="col">Efficient</th>
-          <th scope="col">Reversible</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th scope="row">GANs</th>
-          <td>Yes</td>
-          <td>Yes</td>
-          <td class="no">No</td>
-        </tr>
-        <tr>
-          <th scope="row">Flow Models</th>
-          <td>Yes</td>
-          <td class="no">No</td>
-          <td>Yes</td>
-        </tr>
-        <tr>
-          <th scope="row">Autoregressive Models</th>
-          <td class="no">No</td>
-          <td>Yes</td>
-          <td>Yes</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h4>Interactive Figures</h4>
-
-    <p>
-      Here's a dynamically instantiated "figure". We use Intersection Observers to allow loading resource-heavy
-      figures only when readers scroll close to them. The code for this is in <code>src/index.js</code>.
-    </p>
-
-    <d-figure id="svelte-example-dfigure">
-      <figure>
-        <div id="svelte-example-target"></div>
-        <figcaption>And a static figcaption. You can use citations<d-cite key="mercier2011humans"></d-cite> in this
-          figcaption, but not in text added by javascript.</figcaption>
-      </figure>
-    </d-figure>
-
-    <p>You can't use citation tags (<code>d-cite</code>) in figures that are dynamically loaded using Javascript.
-      Distill statically
-      analyzes your submission for its citations, because they need to be uploaded to indexers and organizations like <a
-        href="https://www.crossref.org/">CrossRef</a> and <a href="https://scholar.google.com">Google Scholar</a>.</p>
-
-    <p>That's it for the example article! Feel free to look at <a
-        href="https://github.com/distillpub?utf8=%E2%9C%93&q=post--&type=public">implementations
-        of existing Distill articles</a>, or ask for help in
-      the <a href="http://slack.distill.pub">Distill Slack Community</a>.</p>
-
-  </d-article>
-
-
-
-  <d-appendix>
-    <h3>Acknowledgments</h3>
-    <p>
-      We are deeply grateful to...
-    </p>
-
-    <p>
-      Many of our diagrams are based on...
-    </p>
-
-    <h3>Author Contributions</h3>
-    <p>
-      <b>Research:</b> Alex developed ...
-    </p>
-
-    <p>
-      <b>Writing & Diagrams:</b> The text was initially drafted by...
-    </p>
-
-
-    <d-footnote-list></d-footnote-list>
-    <d-citation-list></d-citation-list>
-  </d-appendix>
-
-  <!-- bibliography will be inlined during Distill pipeline's pre-rendering -->
   <d-bibliography src="bibliography.bib"></d-bibliography>
-
 </body>
