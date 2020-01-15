@@ -54,11 +54,13 @@
 </d-title>
 <d-article><p><b>Please propose edits in the Google Docs <a href="https://docs.google.com/document/d/11UnoVOWPncooSMQFqBigcLzP-dVyalmgrLa2pWFxhuM">version of this document</a>.</b></p>
 
-<p><figure><video loop autoplay muted>
+<figure><a href="demo.html">
+<video loop autoplay muted>
   <source src="figures/teaser.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
-</figure></p>
+</a>
+</figure>
 <p><strong>ROUGH DRAFT - We’re sharing this draft with individuals for comments. Please ask for permission before circulating it more broadly.</strong></p>
 
 <p>All multicellular organisms begin their life as a single egg cell. Being able to build their own bodies is probably the most fundamental skill every living creature possesses. Morphogenesis (the process of an organism shape development) is one of the most striking examples of self-organisation. Cells, tiny building blocks of bodies, communicate with their neighbors to decide the shape of organs and bodyplans, where to grow each organ, how to interconnect them, and when to eventually stop.</p>
@@ -75,7 +77,7 @@
 
 <p>So, what is so special about differentiable update rules? They will allow us to use the powerful language of loss functions to express our wishes, and the developed machinery of gradient-based numerical optimization to fulfill them.! The art of stacking together differentiable functions, and optimizing their parameters to perform various tasks, has a long history. In recent years it has flourished under various names, such as (Deep) Neural Networks, Deep Learning or Differentiable Programming.</p>
 <h2>Experiment 1: Learning to Grow</h2>
-<p><figure><img src="figures/cell_state.svg"></figure></p>
+<figure><img src="figures/cell_state.svg"></figure>
 
 <p><strong>Cell state.</strong> We will represent each cell state as a vector of 16 real values (see the figure above). The first three channels represent the cell color (RGB). The target pattern has color channel values in range [0.0, 1.0] and alpha equal to 1.0 for foreground pixels, and 0.0 for background. </p>
 
@@ -83,19 +85,51 @@
 
 <p>Hidden channels don’t have a predefined meaning, and it’s up to the update rule to decide what to use them for. They can be interpreted as concentrations of some chemicals, electric potentials or some other signaling mechanism that are used by cells to orchestrate the growth. In terms of our biological analogy - all our cells share the same genome (update rule) and are only differentiated by the information encoded in their state vector.</p>
 
-<p><figure><img src="figures/step_flow.svg"></figure></p>
+<figure><img src="figures/step_flow.svg"></figure>
 
 <p><strong>Update rule.</strong> Now it’s time to define the update rule. Our CA runs on a regular 2d grid of 16-dimensional vectors, essentially a 3D array of shape [height, width, 16]. We want to apply the same operation to each cell, and the result of this operation can only depend on the small (say 3x3) neighborhood of the cell. This is heavily reminiscent of the convolution operation, one of the cornerstones of signal processing and differential programming. Convolution is a linear operation, but it can be combined with other per-cell operations to produce a complex update rule, capable of learning the desired behaviour. Our cell update rule can be split into the following phases, applied in order:</p>
 
-<ul><li><strong>Perception.</strong> This step defines what each cell perceives of the environment surrounding it. We implement this via a 3x3 convolution with a fixed kernel. One may argue that defining this kernel is superfluous - after all we could simply have the cell learn the requisite perception kernel coefficients. Our choice of fixed operations are motivated by the fact that real life cells often rely only on chemical gradients to guide the organism development. Thus, we are using classical Sobel filters to estimate the partial derivatives of cell state channels in x- and y- directions, forming a 2D gradient vector for each state channel. We concatenate those gradients with the cells own states, forming a 16*2+16=48 dimensional <i>perception vector</i>.</li></ul></ul>
+<ul><li><strong>Perception.</strong> This step defines what each cell perceives of the environment surrounding it. We implement this via a 3x3 convolution with a fixed kernel. One may argue that defining this kernel is superfluous - after all we could simply have the cell learn the requisite perception kernel coefficients. Our choice of fixed operations are motivated by the fact that real life cells often rely only on chemical gradients to guide the organism development. Thus, we are using classical Sobel filters to estimate the partial derivatives of cell state channels in x- and y- directions, forming a 2D gradient vector for each state channel. We concatenate those gradients with the cells own states, forming a 16*2+16=48 dimensional <i>perception vector</i>, or rather <i>percepted vector, </i>for each cell.</li></ul></ul>
 
-<ul><li><strong>Update computation.</strong> The perception vector undergoes a sequence of per-cell operations, that consists of typical differentiable programming building blocks, such as 1x1-convolutions and ReLU nonlinearities. We use in networks having approximately 8k parameters. Inspired by residual neural networks, we compute the incremental update to the current state. That’s why the last convolution has a special treatment: its coefficients are zero-initialized, because we wanted the network to have do-nothing initial behaviour. ReLU is also not applied to the output of the last layer, as we don’t want to restrict it to non-negative values only.</li></ul></ul>
+<d-code block="" language="python">
+<p>def perceive(state_grid):</p>
+<p>  # Define the Sobel filters.</p>
+<p>  sobel_x = [[-1, 0, +1],</p>
+<p>             [-2, 0, +2],</p>
+<p>             [-1, 0, +1]]</p>
+<p>  sobel_y = transpose(sobel_x)</p>
+
+<p>  # Convolve the Sobel filters with the current states.</p>
+<p>  perceived_gradient_x_grid = convolve(sobel_x, state_grid)</p>
+<p>  perceived_gradient_y_grid = convolve(sobel_x, state_grid)</p>
+<p>  </p>
+<p>  # Concatenate the cell's own state channels, the gradients of channels in x</p>
+<p>  # and the gradient of channels in y. </p>
+<p>  perception_grid = concat(state_grid, perceived_gradient_x_grid, perceived_gradient_y_grid, axis=0)</p>
+
+<p>  return preception_grid</p>
+</d-code>
+
+<ul><li><strong>Update rule.</strong> </li></ul></ul>
+<p>Each cell now applies a series of operations to the perception vector, consisting of typical differentiable programming building blocks, such as 1x1-convolutions and ReLU nonlinearities, which we call the cell’s “update rule”. Recall that the update rule is learned, but every cell runs the same update rule. The network parametrizing this update rule consists of approximately 8,000 parameters. Inspired by residual neural networks, the update rule outputs an incremental update to the cell’s state, which applied to the cell before the next time step. The update rule is designed to exhibit “do-nothing” initial behaviour - implemented by initializing the weights of the final convolutional layer in the update rule with zero. We also forego applying a ReLU to the output of the last layer of the update rule as the incremental updates to the cell state must necessarily be able to both add or subtract from the state.</p>
+
+<d-code block="" language="python">
+<p># For the sake of simplicity the following pseudocode operates </p>
+<p># on a single cell perception vector. For our experiments the </p>
+<p># implementation uses 1D convolutions for performance reasons.</p>
+<p>def update_rule(perception_vector):</p>
+<p>  dx = dense(output_length=128, perception_vector)</p>
+<p>  dx = relu(x)</p>
+<p>  dx = dense(output_length=16, weights_initialization=0.0)</p>
+<p>  return perception_vector + dx</p>
+</d-code>
+
 
 <ul><li><strong>Stochastic cell update.</strong> Typical cellular automata update all cells simultaneously. This implies the existence of a global clock, synchronizing all cells. Relying on global synchronisation is not something one expects from a self-organising system. We relax this requirement by assuming that each cell performs an update independently, waiting for a random time interval between updates. To model this behaviour we apply a random per-cell mask to update vectors, setting all update values to zero with some predefined probability (we use 0.5 during training). This operation can be also seen as an application of per-cell dropout to update vectors.</li></ul></ul>
 
 <ul><li><strong>Living cell masking.</strong> We want to model the growth process that starts with a single cell, and don’t want empty cells to participate in computations or carry any hidden state. We enforce this by explicitly setting all channels of empty cells to zeros. A cell is considered empty if there is no “mature” (alpha>0.1) cell in its 3x3 neightborhood.</li></ul></ul>
 
-<p><figure><img src="figures/train_flow.svg"></figure></p>
+<figure><img src="figures/train_flow.svg"></figure>
 <p><strong>Training strategy.</strong> We are going to initialize the grid with zeros, except a single seed cell in the center, which will have all channels except RGB set to one. We set RGB channels to zeros because we want the seed point to be with alpha<=0.1 visible on the white background.</p>
 
 <p>Once the grid is initialized, we can iteratively apply the update rule. We sample a random number of CA steps from the [64, 96] range for each training step, as we want the pattern to be stable across a number of iterations. This should be a sufficient number of steps to grow the pattern of the size we work with (40x40), even considering the stochastic nature of our update rule.</p>
@@ -104,11 +138,11 @@
 
 <p><strong>First attempt.</strong> Once the optimisation converges, we can run simulations to see how our learned CA grows the butterfly, starting from the seed cell. Let’s see what happens when we run it for longer than the number of steps used during training. The animation below shows the behaviour of a few different models, trained to generate different emoji patterns.</p>
 
-<p><figure>    <video loop autoplay muted>
+<figure>    <video loop autoplay muted>
       <source src="figures/unstable.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
-</figure></p>
+</figure>
 
 <p>We can see that different training runs can lead to models with drastically different long term behaviours. Some tend to die out, some don’t seem to know how to stop growing, but some happen to be almost stable! How can we steer the training towards producing persistent patterns all the time?</p>
 <h2>Experiment 2: What persists, exists</h2>
@@ -127,48 +161,48 @@
 
 <p>Here is what a typical training progress of CA rule looks like. It learns to stabilize the pattern in parallel with refining its features.</p>
 
-<p><figure>    <video loop autoplay muted>
+<figure>    <video loop autoplay muted>
       <source src="figures/train_steps_damage_0.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
-</figure></p>
+</figure>
 <p>CA behaviour at training steps 100, 500, 1000, 4000.</p>
 <h2>Experiment 3: Learning to regenerate</h2>
 <p>In addition to being able to grow their own bodies, living creatures are great at maintaining them. Not only worn out skin gets replaced with new, but very heavy damages to complex vital organs can be regenerated by some creatures. Is there a chance that some of the models we trained above have regenerative capabilities?</p>
 
-<p><figure>    <video loop autoplay muted>
+<figure>    <video loop autoplay muted>
       <source src="figures/regen1.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
-</figure></p>
+</figure>
 <p>The video above shows three different models trained using the same settings. We let each of models develop a pattern for 100 steps, and then damage it in five different ways: by removing different halves of the formed pattern, and by cutting out a square from the center. Once again, we see that these models show quite different out-of-training mode behaviour. “Model 3” has even developed quite strong regenerative capabilities, without being explicitly trained for it! </p>
 
 <p>Let’s steer the training towards producing more regeneration-capable models. We will do this by damaging a few pool-sampled states before each training step.</p>
 
-<p><figure>    <video loop autoplay muted>
+<figure>    <video loop autoplay muted>
       <source src="figures/batches.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
-</figure></p>
+</figure>
 <p>The video above shows training progress, which includes sample damage. We sample 8 states from the pool. Then we replace the highest-loss sample (leftmost) with the seed, and damage three lowest-loss (rightmost) states by setting a random circular region to zeros. The bottom row shows states after CA iterations applied. These states get injected back into the pool.</p>
 
 <p>All the models we trained with the above method could easily recover damages we tried at the beginning of this chapter. We decided to try a heavier set of disturbances to get the feeling the limits of model generalisation.</p>
 
-<p><figure>    <video loop autoplay muted>
+<figure>    <video loop autoplay muted>
       <source src="figures/regen2.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
-</figure></p>
+</figure>
 <p>Models that were exposed to damages during training are much more robust. The last two columns show examples of damages that are not just setting cells to zero: filling the center with random values sampled from [0, 1] interval, and seeding the pattern with two seeds instead of one (horizontally separated by 7 empty pixels). Surprisingly some for models we trained could handle this type of ambiguity.</p>
 <h2>Playing with CA</h2>
 <p>We implemented the TF.js playground that allows the user to interact with CA models we trained by planting new seeds or damaging them.</p>
 <h3>Hidden states</h3>
 <p>The image below shows the distribution of state channel values across the converged pattern, produced by one of our models. The first 4 channels correspond to RGB and alpha mask. The rest are hidden states that cells use to coordinate the growth. Red corresponds to positive, and blue to negative values.</p>
 
-<p><figure><img src="figures/states.png"></figure></p>
+<figure><img src="figures/states.png"></figure>
 <h3>Rotating the pattern</h3>
 <p>We model the cell perception by estimating gradient vectors of state channels with Sobel filters. One can also think that each agent has two sensors that perceive directional derivatives of state vectors across its neighborhood along x and y axes. What happens if we rotate those sensors? We can do this by replacing Sobel kernels with their 2D rotation matrix-weighted counterparts.</p>
-<p><figure><d-math block="">
+<figure><d-math block="">
   \begin{bmatrix}
   K_x \\
   K_y
@@ -183,34 +217,44 @@
   Sobel_x \\
   Sobel_y
   \end{bmatrix}
-</d-math></figure></p>
+</d-math></figure>
 <p>This simple modification of the perception stage produces rotated versions of the pattern without retraining the model!</p>
-<p><figure><img src="figures/rotation.png"></figure></p>
+<figure><img src="figures/rotation.png"></figure>
 <h3>Asynchronous CAs and ODEs</h3>
-<p>As the reader may remember, we are updating a random fraction of the cells at each iteration and claiming that this removes the dependence on global synchronization between cells. Let’s bring those claims to trial. We trained two sets of models: using an update probability of 0.5 (we will refer to them as “asynchronous”), and using an update probability of 1.0 (“synchronous”). The video below compares the behaviour of two of there models, tested under various update probabilities:</p>
-<p><figure>    <video loop autoplay muted>
+<p>As the reader may remember, we are updating a random fraction of the set of cells at each iteration and claiming that this removes the dependence on global synchronization between cells. Let’s bring those claims to trial. We trained two sets of models: one set using an update probability of 0.5 (we will refer to them as “asynchronous”), and one set using an update probability of 1.0 (“synchronous”). The video below compares the behaviour of two of there models, tested under various update probabilities:</p>
+<figure>    <video loop autoplay muted>
       <source src="figures/update_rates.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
-</figure></p>
-<p>We see that the asynchronous model behaves well under update rate of 0.1, but explodes when all cells get updated at each step. The synchronous model seems to produce the correct pattern at arbitrary update rate. Does it mean that the per cell dropout during training was excessive? Let’s compare synchronous and asynchronous models a bit more carefully. The video below compares patterns produced by both types of models under update probability of 0.5. To compare the variation of results between different CA runs, we rendered each pattern 10 times and overlaid results as a video frame sequence. </p>
-<p><figure>    <video loop autoplay muted>
+</figure>
+<p>We see that the asynchronous model behaves well under an update probability of 0.1, but explodes when all cells get updated at each step. The synchronous model seems to produce the correct pattern at arbitrary update rate. Does it mean that the per cell dropout during training was excessive? Let’s compare synchronous and asynchronous models a bit more carefully. The video below compares patterns produced by both types of models under an update probability of 0.5. To compare the variation of results between different CA runs, we rendered each pattern 10 times and overlaid results as a video frame sequence. </p>
+<figure>    <video loop autoplay muted>
       <source src="figures/compare_sync_async.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
-</figure></p>
+</figure>
 <p>As expected, asynchronous models produce much more consistent results in the asynchronous setting, while the patterns grown by the synchronous model are deformed or otherwise disturbed by non-deterministic updates. But there is one more, perhaps surprising property of the asynchronously trained model. Do you remember the instability we had at the update probability of 1.0? Let’s look at our incremental CA update rule. If we ignore the stochastic updates and living cell masking, we can write it in the form of</p>
-<p><figure><d-math block="">
+<figure><d-math block="">
 x_{i+1} = x_i + \lambda f(x_i)
-</d-math></figure></p>
-<p>where <i>λ = 1</i>. This happens to be the formula for Eurler’s numerical ODE integration method! What if we treat our CA as a continuous-time system of ODEs, like the one below?</p>
-<p><figure><d-math block="">
+</d-math></figure>
+<p>where <i>λ = 1</i>. This happens to be the formula for Euler’s numerical ODE integration method! What if we treat our CA as a continuous-time system of ODEs, like the one below?</p>
+<figure><d-math block="">
 \frac{dx}{dt} = f(x)
-</d-math></figure></p>
+</d-math></figure>
 <p>Anyone who’s ever worked with explicit numerical ODE integration, may have seen that setting the integration time step value too high makes the system unstable, produce spurious oscillations and even explode. Can the instability at the update probability 1.0 be caused by the integration time step being too large? Let’s compare the behaviour of the asynchronous and the synchronous models in a fully deterministic setting (all cell update at each steps), varying the step size parameter <i>λ</i> we’ve just introduced.</p>
 
-<p><figure><img src="figures/sync_async_plot.svg"></figure></p>
+<figure><img src="figures/sync_async_plot.svg"></figure>
 <p>The plot above shows the evolution of the loss function computed against the “lizard” target pattern. We see that reducing the step size fixes the unstable behaviour of the asynchronous model, while the output of the synchronous model degrades with decreasing the step size. The asynchronous model performs correctly even if we treat it as a Neural ODE <d-cite key="NeuralODE"></d-cite> system defined on a grid, or, to put differently, replace discrete time with continuum! Although this effect may seem like an irrelevant glitch in the context of this article, we think that the use differentiable programming for continuous-time self-organising systems design can be an exciting direction for future research.</p>
+<h2>Glossary:</h2>
+<p>### Let’s define the terms we use exactly such that we’re consistent throughout the paper and in future discussions.</p>
+
+<ul><li><strong>Cell</strong> - A single pixel in the grid and it’s corresponding <strong>state</strong>.</li></ul>
+<li><strong>(Cell) State - </strong>The internal 12/16 channels of state corresponding to each pixel. </li>
+<li><strong>(Cell) Perception (Vector) - </strong>The combination of own state and neighbouring states. eyvind@: not a huge fan of this name (name not clear whether it alludes to what’s been “perceived” or some parameters deciding how the perception process works) but it’s similar to existing nomenclature such as “perceptive field” so I guess it stays. </li>
+<li><strong>Hidden State</strong> - The portion of the Cell State which is <strong>not being rendered</strong>. eyvind@: again this is a bit tricky because it’s easily confused with hidden state in other contexts, such as RNNs and latent variable models.</li>
+<li></li></ul>
+
+
 <h2>Related work</h2>
 <p>A number of researchers applied CA to modelling of embryogenesis and regeneration. For example J. Miller <d-cite key="Miller2004"></d-cite> proposed a very similar experiment setup, using evolutionary algorithms to design a CA rule that could build and regenerate French flag, starting from a seed cell.</p>
 
