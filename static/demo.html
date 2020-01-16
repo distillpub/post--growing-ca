@@ -21,7 +21,7 @@
 </p>
 
 <p>Click to damage the pattern, Shift-click to seed a new one.</p>
-<canvas id='canvas' style="border: 1px solid black;"></canvas>
+<canvas id='canvas' style="border: 1px solid black; image-rendering: pixelated;"></canvas>
 
 <script>
     "use strict";
@@ -108,8 +108,10 @@
 
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = w * scale;
-        canvas.height = w * scale;
+        canvas.width = w;
+        canvas.height = h;
+        canvas.style.width = `${w*scale}px`;
+        canvas.style.height = `${h*scale}px`;
 
         function getMousePos(e) {
             const x = Math.floor(e.offsetX / scale);
@@ -143,10 +145,7 @@
                     const rgbaBytes = new Uint8ClampedArray(img.dataSync());
                     return new ImageData(rgbaBytes, w, h);
                 });
-                const image = await createImageBitmap(
-                    imageData,
-                    { resizeWidth: w * scale, resizeHeight: h * scale, resizeQuality: 'pixelated' });
-                ctx.drawImage(image, 0, 0);
+                ctx.putImageData(imageData, 0, 0);
                 await sleep(1);
             }
             tf.tidy(() => {
