@@ -17,7 +17,7 @@
 <h1>Growing CA Demo</h1>
 
 <p>Select target: 
-    <span id="emoji_selector">😀💥👁🦎🐠🦋🐞🕸🥨🎄</span>
+    <span id="emoji_selector"></span>
 </p>
 
 <p>Click to damage the pattern, Shift-click to seed a new one.</p>
@@ -25,6 +25,11 @@
 
 <script>
     "use strict";
+
+    const sel = document.getElementById('emoji_selector');
+    for (let c of '😀💥👁🦎🐠🦋🐞🕸🥨🎄') {
+        sel.innerHTML += `<span>${c}</span>`;
+    }
 
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -71,10 +76,11 @@
         const model = await tf.loadGraphModel(GRAPH_URL);
         Object.assign(model.weights, consts);
 
+
         let seed = new Array(16).fill(0).map((x, i) => i < 3 ? 0 : 1);
         seed = tf.tensor(seed, [1, 1, 1, 16]);
 
-        const D = 96;
+        const D = 80;
         const initState = tf.tidy(() => {
             const D2 = D / 2;
             const a = seed.pad([[0, 0], [D2 - 1, D2], [D2 - 1, D2], [0, 0]]);
@@ -83,6 +89,18 @@
 
         const state = tf.variable(initState);
         const [_, h, w, ch] = state.shape;
+
+        sel.onclick = async e=>{
+            const emoji = e.target.innerText;
+            const url = `json_models/${emoji}.json`;
+            const r = await fetch(url);
+            const consts = parseConsts(await r.json());
+            for (const name in model.weights) {
+                model.weights[name][0].dispose();
+            }
+            Object.assign(model.weights, consts);
+            state.assign(initState);
+        }
 
         const damage = (x, y, r) => {
             tf.tidy(() => {
