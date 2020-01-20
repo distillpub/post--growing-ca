@@ -6,9 +6,12 @@
 <script src="layers.js"></script>
 
 <canvas id="c" width="512", height="512"></canvas><br>
-<button onclick="benchmark()">Benchmark</input>
+<button onclick="benchmark()">Benchmark</button><br>
+<pre id='log'>
+</pre>
 
 <script src="https://unpkg.com/twgl.js@4.14.2/dist/4.x/twgl.js"></script>
+<script src="https://mrdoob.github.io/stats.js/build/stats.min.js"></script>
 <script>
   function decodeFloatArray(s) {
     const data = atob(s);
@@ -47,6 +50,16 @@
 
   uniform BufferInfo u_output;
 
+  const float PI = 3.14159265358979;
+  
+  const float _S = 127.0/255.0;
+  vec4 _pack(vec4 v) {
+    return atan(v)/PI + _S;
+  }
+  vec4 unpack(vec4 v) {
+    return tan((v-_S)*PI);
+  }
+
   vec2 getOutputXY() {
     return floor(mod(gl_FragCoord.xy, u_output.size));
   }
@@ -60,7 +73,11 @@
     float tx = floor(mod(ch+0.5, tensor.gridSize.x));
     float ty = floor((ch+0.5) / tensor.gridSize.x);
     p += vec2(tx, ty);
-    return texture2D(tensor.tex, p/tensor.gridSize);
+    return unpack(texture2D(tensor.tex, p/tensor.gridSize));
+  }
+
+  void setOutput(vec4 v) {
+    gl_FragColor = _pack(v);
   }
   `;
 
@@ -69,10 +86,11 @@
   void main() {
     vec2 xy = getOutputXY();
     float ch = getOutputChannel();
-    gl_FragColor  = vec4(0.0);
+    vec4 result = vec4(0.0);
     if (xy == floor(u_output.size/2.0)) { 
-      gl_FragColor  = vec4(vec3(float(ch>0.0)), 1.0);
+      result = vec4(vec3(float(ch>0.0)), 1.0);
     }
+    setOutput(result);
   }
   `]);
 
@@ -86,14 +104,14 @@
     float filterIdx = floor(ch/u_input.packedDepth);
     float inputCh = mod(ch, u_input.packedDepth);
     if (filterIdx == 0.0) {
-      gl_FragColor = sampleTensor(u_input, xy, inputCh);
+      setOutput(sampleTensor(u_input, xy, inputCh));
     } else {
       vec2 dx = (filterIdx == 1.0) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
       vec2 dy = vec2(dx.y, dx.x);
       vec4 v = (sampleTensor(u_input, xy+dx, inputCh)-sampleTensor(u_input, xy-dx, inputCh))*2.0+
                 sampleTensor(u_input, xy+dx+dy, inputCh)-sampleTensor(u_input, xy-dx+dy, inputCh)+
                 sampleTensor(u_input, xy+dx-dy, inputCh)-sampleTensor(u_input, xy-dx-dy, inputCh);
-      gl_FragColor = v / 8.0;
+      setOutput(v / 8.0);
     }
   }
   `]);
@@ -128,7 +146,7 @@
         }
     }
     result += texture2D(u_weightTex, p);  // bias
-    gl_FragColor = u_relu > 0.5 ? max(result, 0.0) : result;
+    setOutput(u_relu > 0.5 ? max(result, 0.0) : result);
   }
   `]);
 
@@ -138,7 +156,7 @@
   uniform float u_seed, u_udpateProbability;
   varying vec2 uv;
   
-  // "Hash without Sine by  David Hoskins: https://www.shadertoy.com/view/4djSRW
+  // "Hash without Sine" by David Hoskins (https://www.shadertoy.com/view/4djSRW)
   float hash13(vec3 p3) {
 	p3  = fract(p3 * .1031);
     p3 += dot(p3, p3.yzx + 33.33);
@@ -147,8 +165,9 @@
 
   void main() {
     vec2 xy = getOutputXY();
-    gl_FragColor = texture2D(u_input.tex, uv);
-    gl_FragColor *= float(hash13(vec3(xy, u_seed)) <= u_udpateProbability);
+    vec4 result = unpack(texture2D(u_input.tex, uv));
+    result *=  float(hash13(vec3(xy, u_seed)) <= u_udpateProbability);
+    setOutput(result);
   }
   `]);
 
@@ -170,21 +189,22 @@
         postMaxAlpha = max(postAlpha, postMaxAlpha);
     }
     if (min(preMaxAlpha, postMaxAlpha) < 0.1) {
-        gl_FragColor = vec4(0.0);
+        setOutput(vec4(0.0));
         return;
     }
-    vec4 state = texture2D(u_state.tex, uv);
-    vec4 update = texture2D(u_update.tex, uv);
-    gl_FragColor = state + update;
+    vec4 state = unpack(texture2D(u_state.tex, uv));
+    vec4 update = unpack(texture2D(u_update.tex, uv));
+    setOutput(state + update);
   }
   `]);
 
   const visProgram = twgl.createProgramInfo(gl, [vs_code, `
+  ${PREFIX}
   precision mediump float;
   uniform sampler2D u_tex;
   varying vec2 uv;
   void main() {
-    vec4 c = texture2D(u_tex, vec2(uv.x, 1.0-uv.y));
+    vec4 c = unpack(texture2D(u_tex, vec2(uv.x, 1.0-uv.y)));
     //gl_FragColor = c + 0.5;
     //gl_FragColor.a = 1.0;
     gl_FragColor = 1.0-c.a + c;
@@ -202,7 +222,7 @@
     const gridH = Math.floor((packedDepth+gridW-1)/gridW);
     const texW = w*gridW, texH = h*gridH;
 
-    const attachments = [{mag: gl.NEAREST, min: gl.NEAREST, type: gl.FLOAT}];
+    const attachments = [{mag: gl.NEAREST, min: gl.NEAREST, format: gl.RGBA}];
     const fbi = twgl.createFramebufferInfo(gl, attachments, texW, texH);
     const tex = fbi.attachments[0];
     return {fbi, w, h, depth, gridW, gridH, packedDepth, tex};
@@ -245,7 +265,7 @@
   const layerTex2 = createLayerTexture(LAYERS[1]);
 
   const CHANNEL_N = 16;
-  const w = h = 64;
+  const w = h = 128;
   let stateBuf = createTensor(h, w, CHANNEL_N);
   let newStateBuf = createTensor(h, w, CHANNEL_N);
   const perceptionBuf = createTensor(h, w, CHANNEL_N*3);
@@ -280,35 +300,48 @@
     runLayer(updateProgram, newStateBuf, {'u_state': stateBuf, 'u_update': maskedUpdateBuf});
     [stateBuf, newStateBuf] = [newStateBuf, stateBuf]
   }
-
-  // warm up
-  function benchmark() {
-    const a = new Float32Array(4);
-    runLayer(initProgram, stateBuf);
-    for (let i=0; i<10; ++i)
-      step();
-    console.time('1000 steps');
-    for (let i=0; i<1000; ++i)
-      step();
-    twgl.bindFramebufferInfo(gl, stateBuf.fbi);
-    gl.readPixels(32, 32, 1, 1, gl.RGBA, gl.FLOAT, a);
-    console.timeEnd('1000 steps');
-  }
-  benchmark();
-  
-
-  
   runLayer(initProgram, stateBuf);
+ 
+  var stats = new Stats();
+  document.body.appendChild( stats.dom );
+
+  
+  
 
   function render(time) {
+    stats.begin();
+
     step();
+
     twgl.bindFramebufferInfo(gl);
     gl.useProgram(visProgram.program);
     twgl.setBuffersAndAttributes(gl, visProgram, bufferInfo);
     twgl.setUniforms(visProgram, {u_tex: stateBuf.tex});
     twgl.drawBufferInfo(gl, bufferInfo);
 
+    gl.finish();
+    stats.end();
+
     requestAnimationFrame(render);
   }
   requestAnimationFrame(render);
+
+
+  function benchmark() {
+    //const a = new Float32Array(4);
+    const a = new Uint8Array(4);
+    runLayer(initProgram, stateBuf);
+    for (let i=0; i<10; ++i)
+      step();
+    const stepN = 400;
+    const start = Date.now();
+    for (let i=0; i<stepN; ++i)
+      step();
+    twgl.bindFramebufferInfo(gl, stateBuf.fbi);
+    gl.readPixels(32, 32, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, a);
+    const dt = Date.now()-start;
+    document.getElementById('log').innerHTML += 
+      `${stepN} steps: ${(dt/stepN).toFixed(2)} ms/step, (${(1000.0/dt*stepN).toFixed(2)} step/sec)\n`;
+  }
+
 </script>
