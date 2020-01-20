@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<title>Growing CA Demo 2</title>
+
+<script src="layers.js"></script>
+
+<canvas id="c" width="512", height="512"></canvas>
+<script src="https://unpkg.com/twgl.js@4.14.2/dist/4.x/twgl.js"></script>
+<script>
+  function decodeFloatArray(s) {
+    const data = atob(s);
+    const buf = new Uint8Array(data.length);
+    for (var i=0; i<data.length; ++i) {
+      buf[i] = data.charCodeAt(i);
+    }
+    return new Float32Array(buf.buffer);
+  }
+
+  const gl = document.getElementById("c").getContext("webgl");
+  gl.getExtension('OES_texture_float');
+
+  const vs_code = `
+  attribute vec4 position;
+  varying vec2 uv;
+  void main() {
+    uv = position.xy*0.5 + 0.5;
+    gl_Position = position;
+  }
+  `
+  const PREFIX = `
+  precision highp float;
+  
+  struct BufferInfo {
+    vec2 size;
+    vec2 gridSize;
+    float depth, packedDepth;
+  };
+  struct InputInfo {
+    vec2 size;
+    vec2 gridSize;
+    float depth, packedDepth;
+    sampler2D tex;
+  };
+
+  uniform BufferInfo u_output;
+
+  vec2 getOutputXY() {
+    return floor(mod(gl_FragCoord.xy, u_output.size));
+  }
+  float getOutputChannel() {
+    vec2 xy = floor(gl_FragCoord.xy/u_output.size);
+    return xy.y*u_output.gridSize.x+xy.x;
+  }
+
+  vec4 sampleTensor(InputInfo tensor, vec2 pos, float ch) {
+    vec2 p = pos/tensor.size;
+    float tx = floor(mod(ch+0.5, tensor.gridSize.x));
+    float ty = floor((ch+0.5) / tensor.gridSize.x);
+    p += vec2(tx, ty);
+    return texture2D(tensor.tex, p/tensor.gridSize);
+  }
+  `;
+
+  const initProgram = twgl.createProgramInfo(gl, [vs_code, `
+  ${PREFIX}
+  void main() {
+    vec2 xy = getOutputXY();
+    float ch = getOutputChannel();
+    gl_FragColor  = vec4(0.0);
+    if (xy == floor(u_output.size/2.0)) { 
+      gl_FragColor  = vec4(vec3(float(ch>0.0)), 1.0);
+    }
+  }
+  `]);
+
+  const perceptionProgram = twgl.createProgramInfo(gl, [vs_code, `
+  ${PREFIX}
+  uniform InputInfo u_input;
+
+  void main() {
+    vec2 xy = getOutputXY();
+    float ch = getOutputChannel();
+    float filterIdx = floor(ch/u_input.packedDepth);
+    float inputCh = mod(ch, u_input.packedDepth);
+    if (filterIdx == 0.0) {
+      gl_FragColor = sampleTensor(u_input, xy, inputCh);
+    } else {
+      vec2 dx = (filterIdx == 1.0) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+      vec2 dy = vec2(dx.y, dx.x);
+      vec4 v = (sampleTensor(u_input, xy+dx, inputCh)-sampleTensor(u_input, xy-dx, inputCh))*2.0+
+                sampleTensor(u_input, xy+dx+dy, inputCh)-sampleTensor(u_input, xy-dx+dy, inputCh)+
+                sampleTensor(u_input, xy+dx-dy, inputCh)-sampleTensor(u_input, xy-dx-dy, inputCh);
+      gl_FragColor = v / 8.0;
+    }
+  }
+  `]);
+
+  const layerProgram = twgl.createProgramInfo(gl, [vs_code, `
+  ${PREFIX}
+  uniform InputInfo u_input;
+  uniform sampler2D u_weightTex;
+
+  uniform float u_relu;
+
+  const float MAX_PACKED_DEPTH = 32.0;
+
+
+  void main() {
+    vec2 xy = getOutputXY();
+    float ch = getOutputChannel();
+    if (ch >= u_output.packedDepth)
+        return;
+
+    float dy = 1.0/(u_input.depth+1.0);
+    vec2 p = vec2(ch/u_output.packedDepth, 0.0);
+    vec4 result = vec4(0.0);
+    for (float i=0.0; i < MAX_PACKED_DEPTH; i+=1.0) {
+        vec4 inVec = sampleTensor(u_input, xy, i);
+        result += inVec.x * texture2D(u_weightTex, p); p.y += dy;
+        result += inVec.y * texture2D(u_weightTex, p); p.y += dy;
+        result += inVec.z * texture2D(u_weightTex, p); p.y += dy;
+        result += inVec.w * texture2D(u_weightTex, p); p.y += dy;
+        if (i+1.5>u_input.packedDepth) {
+            break;
+        }
+    }
+    result += texture2D(u_weightTex, p);  // bias
+    gl_FragColor = u_relu > 0.5 ? max(result, 0.0) : result;
+  }
+  `]);
+
+  const dropoutProgram = twgl.createProgramInfo(gl, [vs_code, `
+  ${PREFIX}
+  uniform InputInfo u_input;
+  uniform float u_seed, u_udpateProbability;
+  varying vec2 uv;
+  
+  // "Hash without Sine by  David Hoskins: https://www.shadertoy.com/view/4djSRW
+  float hash13(vec3 p3) {
+	p3  = fract(p3 * .1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+  }
+
+  void main() {
+    vec2 xy = getOutputXY();
+    gl_FragColor = texture2D(u_input.tex, uv);
+    gl_FragColor *= float(hash13(vec3(xy, u_seed)) <= u_udpateProbability);
+  }
+  `]);
+
+  const updateProgram = twgl.createProgramInfo(gl, [vs_code, `
+  ${PREFIX}
+  uniform InputInfo u_state;
+  uniform InputInfo u_update;
+  varying vec2 uv;
+
+  void main() {
+    vec2 xy = getOutputXY();
+    float preMaxAlpha=0.0, postMaxAlpha=0.0;
+    for (float y=-1.0; y<=1.0; ++y)
+    for (float x=-1.0; x<=1.0; ++x) {
+        float preAlpha = sampleTensor(u_state, xy+vec2(x, y), 0.0).a;
+        float updateAlpha = sampleTensor(u_update, xy+vec2(x, y), 0.0).a;
+        float postAlpha = preAlpha+updateAlpha*0.5;
+        preMaxAlpha = max(preAlpha, preMaxAlpha);
+        postMaxAlpha = max(postAlpha, postMaxAlpha);
+    }
+    if (min(preMaxAlpha, postMaxAlpha) < 0.1) {
+        gl_FragColor = vec4(0.0);
+        return;
+    }
+    vec4 state = texture2D(u_state.tex, uv);
+    vec4 update = texture2D(u_update.tex, uv);
+    gl_FragColor = state + update;
+  }
+  `]);
+
+  const visProgram = twgl.createProgramInfo(gl, [vs_code, `
+  precision mediump float;
+  uniform sampler2D u_tex;
+  varying vec2 uv;
+  void main() {
+    vec4 c = texture2D(u_tex, uv);
+    gl_FragColor = 1.0-c.a + c;
+  }
+  `]);
+ 
+  const arrays = {
+    position: [-1, -1, 0, 1, -1, 0, -1, 1, 0, -1, 1, 0, 1, -1, 0, 1, 1, 0],
+  };
+  const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
+
+  function createTensor(h, w, depth) {
+    const packedDepth = Math.ceil(depth / 4);
+    const gridW = Math.ceil(Math.sqrt(packedDepth));
+    const gridH = Math.floor((packedDepth+gridW-1)/gridW);
+    const texW = w*gridW, texH = h*gridH;
+
+    const attachments = [{mag: gl.NEAREST, min: gl.NEAREST, type: gl.FLOAT}];
+    const fbi = twgl.createFramebufferInfo(gl, attachments, texW, texH);
+    const tex = fbi.attachments[0];
+    return {fbi, w, h, depth, gridW, gridH, packedDepth, tex};
+  }
+
+  function setTensorUniforms(uniforms, name, tensor) {
+    uniforms[name+'.size'] = [tensor.w, tensor.h];
+    uniforms[name+'.gridSize'] = [tensor.gridW, tensor.gridH];
+    uniforms[name+'.depth'] = tensor.depth;
+    uniforms[name+'.packedDepth'] = tensor.packedDepth;
+  }
+
+  function runLayer(program, output, inputs, params) {
+    inputs = inputs || {};
+    params = params || {};
+    const uniforms = {};
+    Object.assign(uniforms, params)
+    setTensorUniforms(uniforms, 'u_output', output);
+    for (const inputName in inputs) {
+      const tensor = inputs[inputName];
+      setTensorUniforms(uniforms, inputName, tensor);
+      uniforms[inputName+'.tex'] = tensor.tex;
+    }
+    twgl.bindFramebufferInfo(gl, output.fbi);
+    gl.useProgram(program.program);
+    twgl.setBuffersAndAttributes(gl, program, bufferInfo);
+    twgl.setUniforms(program, uniforms);
+    twgl.drawBufferInfo(gl, bufferInfo);
+  }
+
+  function createLayerTexture(params) {
+    let src = params.data || decodeFloatArray(params.data_b64);
+    return twgl.createTexture(gl, {
+      mag: gl.NEAREST, min: gl.NEAREST, type: gl.FLOAT,
+      width: params.out_ch/4, height: params.in_ch+1,
+      src: src,
+    });
+  }
+  const layerTex1 = createLayerTexture(LAYERS[0]);
+  const layerTex2 = createLayerTexture(LAYERS[1]);
+
+  const CHANNEL_N = 16;
+  const w = 64, h = 64;
+  let stateBuf = createTensor(h, w, CHANNEL_N);
+  let newStateBuf = createTensor(h, w, CHANNEL_N);
+  const perceptionBuf = createTensor(h, w, CHANNEL_N*3);
+  const hiddenBuf = createTensor(h, w, 128);
+  const updateBuf = createTensor(h, w, CHANNEL_N);
+  const maskedUpdateBuf = createTensor(h, w, CHANNEL_N);
+
+  function fetchVec(buf, x, y) {
+    twgl.bindFramebufferInfo(gl, buf.fbi);
+    const w = buf.fbi.width, h = buf.fbi.width;
+    const a = new Float32Array(h*w*4);
+    gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, a);
+    const res = [];
+    for (let i=0; i<buf.gridH; ++i)
+    for (let j=0; j<buf.gridW; ++j)
+    for (let k=0; k<4; ++k) {
+        const ofs = ((i*buf.h+y)*w + j*buf.w + x)*4 + k; 
+        res.push(a[ofs]);
+        if (res.length == buf.depth)
+            return res;
+    }
+    console.log('fetchVec out!');
+  }
+
+
+  runLayer(initProgram, stateBuf);
+
+  function step() {
+    runLayer(perceptionProgram, perceptionBuf, {'u_input': stateBuf});
+    runLayer(layerProgram, hiddenBuf, {'u_input': perceptionBuf}, {u_weightTex: layerTex1, u_relu: 1.0});
+    runLayer(layerProgram, updateBuf, {'u_input': hiddenBuf}, {u_weightTex: layerTex2, u_relu: 0.0});
+    runLayer(dropoutProgram, maskedUpdateBuf, {'u_input': updateBuf}, {'u_seed': Math.random()*1000, 'u_udpateProbability': 0.5});
+    runLayer(updateProgram, newStateBuf, {'u_state': stateBuf, 'u_update': maskedUpdateBuf});
+    [stateBuf, newStateBuf] = [newStateBuf, stateBuf]
+  }
+
+  for (let i=0; i<10; ++i)
+    step();
+
+  console.time('1000 steps');
+  for (let i=0; i<1000; ++i)
+    step();
+  gl.finish();
+  console.timeEnd('1000 steps');
+
+  runLayer(initProgram, stateBuf);
+
+  function render(time) {
+    step();
+    twgl.bindFramebufferInfo(gl);
+    gl.useProgram(visProgram.program);
+    twgl.setBuffersAndAttributes(gl, visProgram, bufferInfo);
+    twgl.setUniforms(visProgram, {u_tex: stateBuf.tex});
+    twgl.drawBufferInfo(gl, bufferInfo);
+
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+</script>
