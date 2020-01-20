@@ -5,7 +5,9 @@
 
 <script src="layers.js"></script>
 
-<canvas id="c" width="512", height="512"></canvas>
+<canvas id="c" width="512", height="512"></canvas><br>
+<button onclick="benchmark()">Benchmark</input>
+
 <script src="https://unpkg.com/twgl.js@4.14.2/dist/4.x/twgl.js"></script>
 <script>
   function decodeFloatArray(s) {
@@ -54,7 +56,7 @@
   }
 
   vec4 sampleTensor(InputInfo tensor, vec2 pos, float ch) {
-    vec2 p = pos/tensor.size;
+    vec2 p = (pos+0.5)/tensor.size;
     float tx = floor(mod(ch+0.5, tensor.gridSize.x));
     float ty = floor((ch+0.5) / tensor.gridSize.x);
     p += vec2(tx, ty);
@@ -113,7 +115,7 @@
         return;
 
     float dy = 1.0/(u_input.depth+1.0);
-    vec2 p = vec2(ch/u_output.packedDepth, 0.0);
+    vec2 p = vec2((ch+0.5)/u_output.packedDepth, dy*0.5);
     vec4 result = vec4(0.0);
     for (float i=0.0; i < MAX_PACKED_DEPTH; i+=1.0) {
         vec4 inVec = sampleTensor(u_input, xy, i);
@@ -182,7 +184,9 @@
   uniform sampler2D u_tex;
   varying vec2 uv;
   void main() {
-    vec4 c = texture2D(u_tex, uv);
+    vec4 c = texture2D(u_tex, vec2(uv.x, 1.0-uv.y));
+    //gl_FragColor = c + 0.5;
+    //gl_FragColor.a = 1.0;
     gl_FragColor = 1.0-c.a + c;
   }
   `]);
@@ -241,7 +245,7 @@
   const layerTex2 = createLayerTexture(LAYERS[1]);
 
   const CHANNEL_N = 16;
-  const w = 64, h = 64;
+  const w = h = 64;
   let stateBuf = createTensor(h, w, CHANNEL_N);
   let newStateBuf = createTensor(h, w, CHANNEL_N);
   const perceptionBuf = createTensor(h, w, CHANNEL_N*3);
@@ -267,7 +271,6 @@
   }
 
 
-  runLayer(initProgram, stateBuf);
 
   function step() {
     runLayer(perceptionProgram, perceptionBuf, {'u_input': stateBuf});
@@ -278,15 +281,23 @@
     [stateBuf, newStateBuf] = [newStateBuf, stateBuf]
   }
 
-  for (let i=0; i<10; ++i)
-    step();
+  // warm up
+  function benchmark() {
+    const a = new Float32Array(4);
+    runLayer(initProgram, stateBuf);
+    for (let i=0; i<10; ++i)
+      step();
+    console.time('1000 steps');
+    for (let i=0; i<1000; ++i)
+      step();
+    twgl.bindFramebufferInfo(gl, stateBuf.fbi);
+    gl.readPixels(32, 32, 1, 1, gl.RGBA, gl.FLOAT, a);
+    console.timeEnd('1000 steps');
+  }
+  benchmark();
+  
 
-  console.time('1000 steps');
-  for (let i=0; i<1000; ++i)
-    step();
-  gl.finish();
-  console.timeEnd('1000 steps');
-
+  
   runLayer(initProgram, stateBuf);
 
   function render(time) {
