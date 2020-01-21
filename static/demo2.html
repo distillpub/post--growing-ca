@@ -3,7 +3,11 @@
 
 <title>Growing CA Demo 2</title>
 
-<script src="layers.js"></script>
+<h1>Growing CA Demo 2</h1>
+
+<p>Select target: 
+    <span id="emoji_selector"></span>
+</p>
 
 <canvas id="c" width="512", height="512"></canvas><br>
 <button onclick="benchmark()">Benchmark</button><br>
@@ -13,18 +17,26 @@
 <script src="https://unpkg.com/twgl.js@4.14.2/dist/4.x/twgl.js"></script>
 <script src="https://mrdoob.github.io/stats.js/build/stats.min.js"></script>
 <script>
-  function decodeFloatArray(s) {
+  "use strict";
+
+  const sel = document.getElementById('emoji_selector');
+  for (let c of '😀💥👁🦎🐠🦋🐞🕸🥨🎄') {
+      sel.innerHTML += `<span>${c}</span>`;
+  }
+
+
+  function decodeArray(s, arrayType) {
     const data = atob(s);
     const buf = new Uint8Array(data.length);
     for (var i=0; i<data.length; ++i) {
       buf[i] = data.charCodeAt(i);
     }
-    return new Float32Array(buf.buffer);
+    return new arrayType(buf.buffer);
   }
 
   const gl = document.getElementById("c").getContext("webgl");
-  gl.getExtension('OES_texture_float');
-
+  const ext = gl.getExtension('OES_texture_half_float');
+  
   const vs_code = `
   attribute vec4 position;
   varying vec2 uv;
@@ -61,7 +73,7 @@
   }
 
   vec2 getOutputXY() {
-    return floor(mod(gl_FragCoord.xy, u_output.size));
+    return mod(gl_FragCoord.xy, u_output.size);
   }
   float getOutputChannel() {
     vec2 xy = floor(gl_FragCoord.xy/u_output.size);
@@ -69,9 +81,10 @@
   }
 
   vec4 sampleTensor(InputInfo tensor, vec2 pos, float ch) {
-    vec2 p = (pos+0.5)/tensor.size;
-    float tx = floor(mod(ch+0.5, tensor.gridSize.x));
-    float ty = floor((ch+0.5) / tensor.gridSize.x);
+    vec2 p = pos/tensor.size;
+    ch += 0.5;
+    float tx = floor(mod(ch, tensor.gridSize.x));
+    float ty = floor(ch / tensor.gridSize.x);
     p += vec2(tx, ty);
     return unpack(texture2D(tensor.tex, p/tensor.gridSize));
   }
@@ -87,7 +100,8 @@
     vec2 xy = getOutputXY();
     float ch = getOutputChannel();
     vec4 result = vec4(0.0);
-    if (xy == floor(u_output.size/2.0)) { 
+
+    if (length(xy-0.5*(u_output.size-1.0))<1.0) { 
       result = vec4(vec3(float(ch>0.0)), 1.0);
     }
     setOutput(result);
@@ -184,7 +198,7 @@
     for (float x=-1.0; x<=1.0; ++x) {
         float preAlpha = sampleTensor(u_state, xy+vec2(x, y), 0.0).a;
         float updateAlpha = sampleTensor(u_update, xy+vec2(x, y), 0.0).a;
-        float postAlpha = preAlpha+updateAlpha*0.5;
+        float postAlpha = preAlpha+updateAlpha;
         preMaxAlpha = max(preAlpha, preMaxAlpha);
         postMaxAlpha = max(postAlpha, postMaxAlpha);
     }
@@ -201,13 +215,13 @@
   const visProgram = twgl.createProgramInfo(gl, [vs_code, `
   ${PREFIX}
   precision mediump float;
-  uniform sampler2D u_tex;
+  uniform InputInfo u_input;
   varying vec2 uv;
   void main() {
-    vec4 c = unpack(texture2D(u_tex, vec2(uv.x, 1.0-uv.y)));
-    //gl_FragColor = c + 0.5;
-    //gl_FragColor.a = 1.0;
-    gl_FragColor = 1.0-c.a + c;
+    vec2 xy = vec2(uv.x, 1.0-uv.y);
+    xy *= u_input.size;
+    vec4 rgba = sampleTensor(u_input, xy, 0.0);
+    gl_FragColor = 1.0-rgba.a + rgba;
   }
   `]);
  
@@ -222,30 +236,36 @@
     const gridH = Math.floor((packedDepth+gridW-1)/gridW);
     const texW = w*gridW, texH = h*gridH;
 
-    const attachments = [{mag: gl.NEAREST, min: gl.NEAREST, format: gl.RGBA}];
+    const attachments = [{minMag: gl.NEAREST}];
     const fbi = twgl.createFramebufferInfo(gl, attachments, texW, texH);
     const tex = fbi.attachments[0];
-    return {fbi, w, h, depth, gridW, gridH, packedDepth, tex};
+    return {fbi, w, h, depth, gridW, gridH, packedDepth, tex, _type: 'tensor'};
   }
 
-  function setTensorUniforms(uniforms, name, tensor) {
+  function setTensorUniforms(uniforms, name, tensor, isInput) {
     uniforms[name+'.size'] = [tensor.w, tensor.h];
     uniforms[name+'.gridSize'] = [tensor.gridW, tensor.gridH];
     uniforms[name+'.depth'] = tensor.depth;
     uniforms[name+'.packedDepth'] = tensor.packedDepth;
+    if (isInput) {
+      uniforms[name+'.tex'] = tensor.tex;
+    }
   }
 
-  function runLayer(program, output, inputs, params) {
+  function runLayer(program, output, inputs) {
     inputs = inputs || {};
-    params = params || {};
     const uniforms = {};
-    Object.assign(uniforms, params)
-    setTensorUniforms(uniforms, 'u_output', output);
-    for (const inputName in inputs) {
-      const tensor = inputs[inputName];
-      setTensorUniforms(uniforms, inputName, tensor);
-      uniforms[inputName+'.tex'] = tensor.tex;
+    for (const name in inputs) {
+      const val = inputs[name];
+      if (val._type == 'tensor') {
+        setTensorUniforms(uniforms, name, val, true);
+      } else {
+        uniforms[name] = val;
+      }
     }
+    setTensorUniforms(uniforms, 'u_output', output);
+    //console.log(uniforms);
+
     twgl.bindFramebufferInfo(gl, output.fbi);
     gl.useProgram(program.program);
     twgl.setBuffersAndAttributes(gl, program, bufferInfo);
@@ -254,18 +274,26 @@
   }
 
   function createLayerTexture(params) {
-    let src = params.data || decodeFloatArray(params.data_b64);
+    const src = params.data || decodeArray(params.data_b64, Uint16Array);
     return twgl.createTexture(gl, {
-      mag: gl.NEAREST, min: gl.NEAREST, type: gl.FLOAT,
-      width: params.out_ch/4, height: params.in_ch+1,
-      src: src,
-    });
+      minMag: gl.NEAREST, type: ext.HALF_FLOAT_OES, 
+      width: params.out_ch/4, height: params.in_ch+1, src: src});
   }
-  const layerTex1 = createLayerTexture(LAYERS[0]);
-  const layerTex2 = createLayerTexture(LAYERS[1]);
+
+  
+  let layerTex1 = null;
+  let layerTex2 = null;
+
+  const GRAPH_URL = 'layers.js';
+  fetch(GRAPH_URL).then(r=>r.json()).then(layers=>{
+    console.log('loaded');
+    layerTex1 = createLayerTexture(layers[0]);
+    layerTex2 = createLayerTexture(layers[1]);
+    requestAnimationFrame(render);
+  });
 
   const CHANNEL_N = 16;
-  const w = h = 128;
+  const w = 128, h = 128;
   let stateBuf = createTensor(h, w, CHANNEL_N);
   let newStateBuf = createTensor(h, w, CHANNEL_N);
   const perceptionBuf = createTensor(h, w, CHANNEL_N*3);
@@ -293,15 +321,17 @@
 
 
   function step() {
+    if (!layerTex1 || !layerTex2)
+      return;
     runLayer(perceptionProgram, perceptionBuf, {'u_input': stateBuf});
-    runLayer(layerProgram, hiddenBuf, {'u_input': perceptionBuf}, {u_weightTex: layerTex1, u_relu: 1.0});
-    runLayer(layerProgram, updateBuf, {'u_input': hiddenBuf}, {u_weightTex: layerTex2, u_relu: 0.0});
-    runLayer(dropoutProgram, maskedUpdateBuf, {'u_input': updateBuf}, {'u_seed': Math.random()*1000, 'u_udpateProbability': 0.5});
+    runLayer(layerProgram, hiddenBuf, {'u_input': perceptionBuf, u_weightTex: layerTex1, u_relu: 1.0});
+    runLayer(layerProgram, updateBuf, {'u_input': hiddenBuf, u_weightTex: layerTex2, u_relu: 0.0});
+    runLayer(dropoutProgram, maskedUpdateBuf, {'u_input': updateBuf, 'u_seed': Math.random()*1000, 'u_udpateProbability': 0.5});
     runLayer(updateProgram, newStateBuf, {'u_state': stateBuf, 'u_update': maskedUpdateBuf});
     [stateBuf, newStateBuf] = [newStateBuf, stateBuf]
   }
   runLayer(initProgram, stateBuf);
- 
+
   var stats = new Stats();
   document.body.appendChild( stats.dom );
 
@@ -316,7 +346,9 @@
     twgl.bindFramebufferInfo(gl);
     gl.useProgram(visProgram.program);
     twgl.setBuffersAndAttributes(gl, visProgram, bufferInfo);
-    twgl.setUniforms(visProgram, {u_tex: stateBuf.tex});
+    const uniforms = {}
+    setTensorUniforms(uniforms, 'u_input', stateBuf, true);
+    twgl.setUniforms(visProgram, uniforms);
     twgl.drawBufferInfo(gl, bufferInfo);
 
     gl.finish();
@@ -324,7 +356,6 @@
 
     requestAnimationFrame(render);
   }
-  requestAnimationFrame(render);
 
 
   function benchmark() {
