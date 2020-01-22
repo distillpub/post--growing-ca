@@ -11,24 +11,44 @@ const vs_code = `
         gl_Position = position;
     }
 `
-const TENSOR_FIELDS = `
-    vec2 size;
-    vec2 gridSize;
-    float depth, depth4;
-    vec2 packScaleBias;`;
+
+function defInput(name) {
+    return `
+        uniform Tensor ${name};
+        uniform sampler2D ${name}_tex;
+
+        vec4 ${name}_read(vec2 pos, float ch) {return _read(${name}, ${name}_tex, pos, ch);}
+        vec4 ${name}_readUV(vec2 uv) {return _readUV(${name}, ${name}_tex, uv);}
+    `
+}
 
 const PREFIX = `
     precision highp float;
 
-    struct BufferInfo {
-        ${TENSOR_FIELDS}
+    struct Tensor {
+        vec2 size;
+        vec2 gridSize;
+        float depth, depth4;
+        vec2 packScaleBias;
     };
-    struct InputInfo {
-        ${TENSOR_FIELDS}
-        sampler2D tex;
-    };
+    uniform Tensor u_output;
+          
 
-    uniform BufferInfo u_output;
+    vec4 _readUV(Tensor tensor, sampler2D tex, vec2 uv) {
+        vec4 v = texture2D(tex, uv);
+        vec2 p = tensor.packScaleBias;
+        v = tan((v-p.y)*p.x);
+        return v;
+    }
+
+    vec4 _read(Tensor tensor, sampler2D tex, vec2 pos, float ch) {
+        vec2 p = pos/tensor.size;
+        ch += 0.5;
+        float tx = floor(mod(ch, tensor.gridSize.x));
+        float ty = floor(ch / tensor.gridSize.x);
+        p += vec2(tx, ty);
+        return _readUV(tensor, tex, p/tensor.gridSize);
+    }
 
     vec2 getOutputXY() {
         return mod(gl_FragCoord.xy, u_output.size);
@@ -44,21 +64,7 @@ const PREFIX = `
         gl_FragColor = v;
     }
 
-    vec4 readTensorUV(InputInfo tensor, vec2 uv) {
-        vec4 v = texture2D(tensor.tex, uv);
-        vec2 p = tensor.packScaleBias;
-        v = tan((v-p.y)*p.x);
-        return v;
-    }
-
-    vec4 sampleTensor(InputInfo tensor, vec2 pos, float ch) {
-        vec2 p = pos/tensor.size;
-        ch += 0.5;
-        float tx = floor(mod(ch, tensor.gridSize.x));
-        float ty = floor(ch / tensor.gridSize.x);
-        p += vec2(tx, ty);
-        return readTensorUV(tensor, p/tensor.gridSize);
-    }
+    ${defInput('u_input')}
 `;
 
 const PROGRAMS = {
@@ -79,26 +85,23 @@ const PROGRAMS = {
         setOutput(result);
     }`,
     perception: `
-    uniform InputInfo u_input;
-
     void main() {
         vec2 xy = getOutputXY();
         float ch = getOutputChannel();
         float filterIdx = floor(ch/u_input.depth4);
         float inputCh = mod(ch, u_input.depth4);
         if (filterIdx == 0.0) {
-            setOutput(sampleTensor(u_input, xy, inputCh));
+            setOutput(u_input_read(xy, inputCh));
         } else {
             vec2 dx = (filterIdx == 1.0) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
             vec2 dy = vec2(dx.y, dx.x);
-            vec4 v = (sampleTensor(u_input, xy+dx, inputCh)-sampleTensor(u_input, xy-dx, inputCh))*2.0+
-                    sampleTensor(u_input, xy+dx+dy, inputCh)-sampleTensor(u_input, xy-dx+dy, inputCh)+
-                    sampleTensor(u_input, xy+dx-dy, inputCh)-sampleTensor(u_input, xy-dx-dy, inputCh);
+            vec4 v = (u_input_read(xy+dx, inputCh)-u_input_read(xy-dx, inputCh))*2.0+
+                    u_input_read(xy+dx+dy, inputCh)-u_input_read(xy-dx+dy, inputCh)+
+                    u_input_read(xy+dx-dy, inputCh)-u_input_read(xy-dx-dy, inputCh);
             setOutput(v / 8.0);
         }
     }`,
     dense: `
-    uniform InputInfo u_input;
     uniform sampler2D u_weightTex;
     
     const float MAX_PACKED_DEPTH = 32.0;
@@ -118,7 +121,7 @@ const PROGRAMS = {
       vec2 p = vec2((ch+0.5)/u_output.depth4, dy*0.5);
       vec4 result = vec4(0.0);
       for (float i=0.0; i < MAX_PACKED_DEPTH; i+=1.0) {
-          vec4 inVec = sampleTensor(u_input, xy, i);
+          vec4 inVec = u_input_read(xy, i);
           result += inVec.x * readWeight(p); p.y += dy;
           result += inVec.y * readWeight(p); p.y += dy;
           result += inVec.z * readWeight(p); p.y += dy;
@@ -131,7 +134,6 @@ const PROGRAMS = {
       setOutput(result);
     }`,
     dropout: `
-    uniform InputInfo u_input;
     uniform float u_seed, u_udpateProbability;
     varying vec2 uv;
     
@@ -144,13 +146,13 @@ const PROGRAMS = {
     
     void main() {
       vec2 xy = getOutputXY();
-      vec4 result = readTensorUV(u_input, uv);
+      vec4 result = u_input_readUV(uv);
       result *=  float(hash13(vec3(xy, u_seed)) <= u_udpateProbability);
       setOutput(result);
     }`,
     update: `
-    uniform InputInfo u_state;
-    uniform InputInfo u_update;
+    ${defInput('u_update')}
+
     varying vec2 uv;
     
     void main() {
@@ -164,8 +166,8 @@ const PROGRAMS = {
       float preMaxAlpha=0.0, postMaxAlpha=0.0;
       for (float y=-1.0; y<=1.0; ++y)
       for (float x=-1.0; x<=1.0; ++x) {
-          float preAlpha = sampleTensor(u_state, xy+vec2(x, y), 0.0).a;
-          float updateAlpha = sampleTensor(u_update, xy+vec2(x, y), 0.0).a;
+          float preAlpha = u_input_read(xy+vec2(x, y), 0.0).a;
+          float updateAlpha = u_update_read(xy+vec2(x, y), 0.0).a;
           float postAlpha = preAlpha+updateAlpha;
           preMaxAlpha = max(preAlpha, preMaxAlpha);
           postMaxAlpha = max(postAlpha, postMaxAlpha);
@@ -174,22 +176,21 @@ const PROGRAMS = {
           setOutput(vec4(0.0));
           return;
       }
-      vec4 state = readTensorUV(u_state, uv);
-      vec4 update = readTensorUV(u_update, uv);
+      vec4 state = u_input_readUV(uv);
+      vec4 update = u_update_readUV(uv);
       setOutput(state + update);
     }`,
     vis: `
-    uniform InputInfo u_input;
     uniform float u_raw;
     varying vec2 uv;
     void main() {
         vec2 xy = vec2(uv.x, 1.0-uv.y);
         if (u_raw > 0.5) {
-            gl_FragColor = texture2D(u_input.tex, xy);
+            gl_FragColor = texture2D(u_input_tex, xy);
             gl_FragColor.a = 1.0;
         } else {
             xy *= u_input.size;    
-            vec4 rgba = sampleTensor(u_input, xy, 0.0);
+            vec4 rgba = u_input_read(xy, 0.0);
             gl_FragColor = 1.0-rgba.a + rgba;
         }
     }`
@@ -245,7 +246,7 @@ export function createDemo(gl, layerWeights, gridSize) {
         uniforms[name + '.depth4'] = tensor.depth4;
         uniforms[name + '.packScaleBias'] = tensor.packScaleBias;
         if (name != 'u_output') {
-            uniforms[name + '.tex'] = tensor.tex;
+            uniforms[name + '_tex'] = tensor.tex;
         }
     }
 
@@ -301,7 +302,7 @@ export function createDemo(gl, layerWeights, gridSize) {
         ()=>runLayer('dense', hiddenBuf, {'u_input': perceptionBuf, u_weightTex: layerTex1}),
         ()=>runLayer('dense', updateBuf, {'u_input': hiddenBuf, u_weightTex: layerTex2}),
         ()=>runLayer('dropout', maskedUpdateBuf, {'u_input': updateBuf, 'u_seed': Math.random()*1000, 'u_udpateProbability': 0.5}),
-        ()=>runLayer('update', newStateBuf, {'u_state': stateBuf, 'u_update': maskedUpdateBuf}),
+        ()=>runLayer('update', newStateBuf, {'u_input': stateBuf, 'u_update': maskedUpdateBuf}),
     ];
 
     reset();
