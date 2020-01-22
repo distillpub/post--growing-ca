@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 
+<style>
+#c {
+  border: 1px solid black;
+  image-rendering: pixelated;
+  touch-action: none;
+
+}
+</style>
+
+
 <title>Growing CA Demo 2</title>
 
 <h1>Growing CA Demo 2</h1>
@@ -9,7 +19,7 @@
   <span id="emojiSelector"></span>
 </p>
 
-<canvas id="c" width="512" , height="512" style="image-rendering: pixelated; "></canvas><br>
+<canvas id="c" width="512" , height="512"></canvas><br>
 Show: <select id='visMode'></select>
 <button id="resetButton">Reset</button>
 <button id="benchmarkButton">Benchmark</button>
@@ -25,8 +35,9 @@ Show: <select id='visMode'></select>
   const gl = canvas.getContext("webgl");
 
   let demo;
+  const modelDir = 'webgl_models32/';
 
-  fetch('webgl_models8/🦎.json').then(r => r.json()).then(layers => {
+  fetch(modelDir+'🦎.json').then(r => r.json()).then(layers => {
     demo = createDemo(gl, layers);
     const sel = document.getElementById('visMode');
     for (const mode of demo.visModes) {
@@ -46,7 +57,7 @@ Show: <select id='visMode'></select>
     if (!demo)
       return;
     const emoji = e.target.innerText;
-    const url = `webgl_models8/${emoji}.json`;
+    const url = modelDir+`${emoji}.json`;
     const r = await fetch(url);
     const model = await r.json();
     demo.setWeights(model);
@@ -54,8 +65,9 @@ Show: <select id='visMode'></select>
   }
 
   function getMousePos(e) {
-    const x = Math.floor(e.offsetX / canvas.width * 128);
-    const y = Math.floor(e.offsetY / canvas.height * 128);
+    const [w, h] = demo.gridSize;
+    const x = Math.floor(e.offsetX / canvas.width * w);
+    const y = Math.floor(e.offsetY / canvas.height * h);
     return [x, y];
   }
 
@@ -83,11 +95,31 @@ Show: <select id='visMode'></select>
     e.preventDefault();
     if (!demo)
       return;
-    const [x, y] = getMousePos(e);
-    if (e.buttons == 1 && !e.shiftKey) {
+    if (e.buttons == 1) {
+      const [x, y] = getMousePos(e);
       demo.paint(x, y, 8, 'clear');
     }
   }
+
+  canvas.addEventListener("touchmove", e=>{
+//    e.preventDefault();
+    if (!demo)
+      return;
+    const ox = e.target.offsetLeft;
+    const oy = e.target.offsetTop;
+    for (const t of e.touches) {
+      const mx = t.clientX - ox;
+      const my = t.clientY - oy;
+      const [w, h] = demo.gridSize;
+      const x = Math.floor(mx / canvas.width * w);
+      const y = Math.floor(my / canvas.height * h);
+      demo.paint(x, y, 8, 'clear');
+    }
+    
+      //const [x, y] = getMousePos(e);
+    //console.log(x, y);
+    //demo.paint(x, y, 8, 'clear');
+  }, false);
 
   function render(time) {
     if (!demo)

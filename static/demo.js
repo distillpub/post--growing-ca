@@ -38,7 +38,6 @@ const PREFIX = `
         return xy.y*u_output.gridSize.x+xy.x;
     }
 
-    const float c = 127.0/255.0;
     void setOutput(vec4 v) {
         vec2 p = u_output.packScaleBias;
         v = atan(v)/p.x + p.y;
@@ -52,7 +51,7 @@ const PREFIX = `
         return v;
     }
 
-    vec4 readTensor(InputInfo tensor, vec2 pos, float ch) {
+    vec4 sampleTensor(InputInfo tensor, vec2 pos, float ch) {
         vec2 p = pos/tensor.size;
         ch += 0.5;
         float tx = floor(mod(ch, tensor.gridSize.x));
@@ -88,13 +87,13 @@ const PROGRAMS = {
         float filterIdx = floor(ch/u_input.depth4);
         float inputCh = mod(ch, u_input.depth4);
         if (filterIdx == 0.0) {
-            setOutput(readTensor(u_input, xy, inputCh));
+            setOutput(sampleTensor(u_input, xy, inputCh));
         } else {
             vec2 dx = (filterIdx == 1.0) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
             vec2 dy = vec2(dx.y, dx.x);
-            vec4 v = (readTensor(u_input, xy+dx, inputCh)-readTensor(u_input, xy-dx, inputCh))*2.0+
-                    readTensor(u_input, xy+dx+dy, inputCh)-readTensor(u_input, xy-dx+dy, inputCh)+
-                    readTensor(u_input, xy+dx-dy, inputCh)-readTensor(u_input, xy-dx-dy, inputCh);
+            vec4 v = (sampleTensor(u_input, xy+dx, inputCh)-sampleTensor(u_input, xy-dx, inputCh))*2.0+
+                    sampleTensor(u_input, xy+dx+dy, inputCh)-sampleTensor(u_input, xy-dx+dy, inputCh)+
+                    sampleTensor(u_input, xy+dx-dy, inputCh)-sampleTensor(u_input, xy-dx-dy, inputCh);
             setOutput(v / 8.0);
         }
     }`,
@@ -106,7 +105,7 @@ const PROGRAMS = {
     
     vec4 readWeight(vec2 p) {
         vec4 w = texture2D(u_weightTex, p);
-        return log(-w/(w-1.0))/3.0;
+        return w; //log(-w/(w-1.0))/3.0;
     }
     
     void main() {
@@ -119,7 +118,7 @@ const PROGRAMS = {
       vec2 p = vec2((ch+0.5)/u_output.depth4, dy*0.5);
       vec4 result = vec4(0.0);
       for (float i=0.0; i < MAX_PACKED_DEPTH; i+=1.0) {
-          vec4 inVec = readTensor(u_input, xy, i);
+          vec4 inVec = sampleTensor(u_input, xy, i);
           result += inVec.x * readWeight(p); p.y += dy;
           result += inVec.y * readWeight(p); p.y += dy;
           result += inVec.z * readWeight(p); p.y += dy;
@@ -165,8 +164,8 @@ const PROGRAMS = {
       float preMaxAlpha=0.0, postMaxAlpha=0.0;
       for (float y=-1.0; y<=1.0; ++y)
       for (float x=-1.0; x<=1.0; ++x) {
-          float preAlpha = readTensor(u_state, xy+vec2(x, y), 0.0).a;
-          float updateAlpha = readTensor(u_update, xy+vec2(x, y), 0.0).a;
+          float preAlpha = sampleTensor(u_state, xy+vec2(x, y), 0.0).a;
+          float updateAlpha = sampleTensor(u_update, xy+vec2(x, y), 0.0).a;
           float postAlpha = preAlpha+updateAlpha;
           preMaxAlpha = max(preAlpha, preMaxAlpha);
           postMaxAlpha = max(postAlpha, postMaxAlpha);
@@ -190,7 +189,7 @@ const PROGRAMS = {
             gl_FragColor.a = 1.0;
         } else {
             xy *= u_input.size;    
-            vec4 rgba = readTensor(u_input, xy, 0.0);
+            vec4 rgba = sampleTensor(u_input, xy, 0.0);
             gl_FragColor = 1.0-rgba.a + rgba;
         }
     }`
@@ -206,7 +205,12 @@ function decodeArray(s, arrayType) {
 }
 
 
-export function createDemo(gl, layerWeights) {
+export function createDemo(gl, layerWeights, gridSize) {
+    gl.getExtension('OES_texture_float');
+
+    gridSize = gridSize || [96, 96];
+    const [gridW, gridH] = gridSize;
+
     function createPrograms() {
         const res = {};
         for (const name in PROGRAMS) {
@@ -268,9 +272,9 @@ export function createDemo(gl, layerWeights) {
     }
 
     function createDenseTexture(params) {
-        const src = params.data || decodeArray(params.data_b64, Uint8Array);
+        const src = params.data || decodeArray(params.data_b64, Float32Array);
         return twgl.createTexture(gl, {
-            minMag: gl.NEAREST,
+            minMag: gl.NEAREST, type: gl.FLOAT,
             width: params.out_ch / 4, height: params.in_ch + 1, src: src
         });
     }
@@ -282,13 +286,12 @@ export function createDemo(gl, layerWeights) {
     
 
     const CHANNEL_N = 16;
-    const w = 128, h = 128;
-    let stateBuf = createTensor(h, w, CHANNEL_N);
-    let newStateBuf = createTensor(h, w, CHANNEL_N);
-    const perceptionBuf = createTensor(h, w, CHANNEL_N*3);
-    const hiddenBuf = createTensor(h, w, 128, 'relu');
-    const updateBuf = createTensor(h, w, CHANNEL_N);
-    const maskedUpdateBuf = createTensor(h, w, CHANNEL_N);
+    let stateBuf = createTensor(gridW, gridH, CHANNEL_N);
+    let newStateBuf = createTensor(gridW, gridH, CHANNEL_N);
+    const perceptionBuf = createTensor(gridW, gridH, CHANNEL_N*3);
+    const hiddenBuf = createTensor(gridW, gridH, 128, 'relu');
+    const updateBuf = createTensor(gridW, gridH, CHANNEL_N);
+    const maskedUpdateBuf = createTensor(gridW, gridH, CHANNEL_N);
     
     let layerTex1 = createDenseTexture(layerWeights[0]);
     let layerTex2 = createDenseTexture(layerWeights[1]);
@@ -311,8 +314,8 @@ export function createDemo(gl, layerWeights) {
     }
 
     function reset() {
-        paint(0, 0, w+h, 'clear');
-        paint(w/2, h/2, 1, 'seed');
+        paint(0, 0, 10000, 'clear');
+        paint(gridW/2, gridH/2, 1, 'seed');
     }
 
     function step() {
@@ -378,5 +381,5 @@ export function createDemo(gl, layerWeights) {
     
     }
 
-    return {reset, step, draw, benchmark, setWeights, paint, visModes};
+    return {reset, step, draw, benchmark, setWeights, paint, visModes, gridSize};
 }
