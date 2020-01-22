@@ -18,17 +18,15 @@ Show: <select id='visMode'></select>
 </pre>
 
 <script src="twgl.min.js"></script>
-<script src="https://mrdoob.github.io/stats.js/build/stats.min.js"></script>
 <script type="module">
   import { createDemo } from './demo.js'
-
 
   const canvas = document.getElementById("c");
   const gl = canvas.getContext("webgl");
 
   let demo;
 
-  fetch('webgl_models/😀.json').then(r => r.json()).then(layers => {
+  fetch('webgl_models8/🦎.json').then(r => r.json()).then(layers => {
     demo = createDemo(gl, layers);
     const sel = document.getElementById('visMode');
     for (const mode of demo.visModes) {
@@ -48,7 +46,7 @@ Show: <select id='visMode'></select>
     if (!demo)
       return;
     const emoji = e.target.innerText;
-    const url = `webgl_models/${emoji}.json`;
+    const url = `webgl_models8/${emoji}.json`;
     const r = await fetch(url);
     const model = await r.json();
     demo.setWeights(model);
@@ -91,23 +89,13 @@ Show: <select id='visMode'></select>
     }
   }
 
-
-  var stats = new Stats();
-  document.body.appendChild(stats.dom);
-
-
   function render(time) {
     if (!demo)
       return;
-    stats.begin();
-
     demo.step();
     twgl.bindFramebufferInfo(gl);
     const mode = document.getElementById("visMode").value;
     demo.draw(mode);
-
-    stats.end();
-
     requestAnimationFrame(render);
   }
 
@@ -115,15 +103,7 @@ Show: <select id='visMode'></select>
   function benchmark() {
     if (!demo)
       return;
-
-    const stepN = 400;
-    const start = Date.now();
-    for (let i = 0; i < stepN; ++i)
-      demo.step();
-    demo.flush();
-    const dt = Date.now() - start;
-    document.getElementById('log').innerHTML +=
-      `${stepN} steps: ${(dt / stepN).toFixed(2)} ms/step, (${(1000.0 / dt * stepN).toFixed(2)} step/sec)\n`;
+    document.getElementById('log').innerHTML += demo.benchmark();
   }
 
   document.getElementById('benchmarkButton').onclick = benchmark;
