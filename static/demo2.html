@@ -20,7 +20,7 @@
 </p>
 
 <input type="checkbox" id="throttle"> Full throttle
-fps: <span id="fps"></span><br>
+IPS: <span id="fps"></span><br>
 <canvas id="c" width="512" , height="512"></canvas><br>
 Show: <select id='visMode'></select>
 <button id="resetButton">Reset</button>
@@ -30,6 +30,7 @@ Show: <select id='visMode'></select>
 </pre>
 
 <script src="twgl.min.js"></script>
+<script type="module" src="./demo.js"></script>
 <script type="module">
   import { createDemo } from './demo.js'
 
@@ -55,6 +56,7 @@ Show: <select id='visMode'></select>
   for (let c of '😀💥👁🦎🐠🦋🐞🕸🥨🎄') {
     modelSel.innerHTML += `<span>${c}</span>`;
   }
+  modelSel.innerHTML += `<span>planarian</span>`;
   modelSel.onclick = async e => {
     if (!demo)
       return;
