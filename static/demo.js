@@ -33,7 +33,6 @@ const PREFIX = `
     };
     uniform Tensor u_output;
           
-
     vec4 _readUV(Tensor tensor, sampler2D tex, vec2 uv) {
         vec4 v = texture2D(tex, uv);
         vec2 p = tensor.packScaleBias;
@@ -103,12 +102,17 @@ const PROGRAMS = {
     }`,
     dense: `
     uniform sampler2D u_weightTex;
+    uniform vec3 u_weightCoefs; // weigthScale, biasScale, center
     
     const float MAX_PACKED_DEPTH = 32.0;
     
     vec4 readWeight(vec2 p) {
         vec4 w = texture2D(u_weightTex, p);
-        return w; //log(-w/(w-1.0))/3.0;
+        return (w-u_weightCoefs.z)*u_weightCoefs.x; 
+    }
+    vec4 readBias(vec2 p) {
+        vec4 w = texture2D(u_weightTex, p);
+        return (w-u_weightCoefs.z)*u_weightCoefs.y; 
     }
     
     void main() {
@@ -130,7 +134,7 @@ const PROGRAMS = {
               break;
           }
       }
-      result += readWeight(p);  // bias
+      result += readBias(p);  // bias
       setOutput(result);
     }`,
     dropout: `
@@ -152,6 +156,8 @@ const PROGRAMS = {
     }`,
     update: `
     ${defInput('u_update')}
+
+    
 
     varying vec2 uv;
     
@@ -207,8 +213,6 @@ function decodeArray(s, arrayType) {
 
 
 export function createDemo(gl, layerWeights, gridSize) {
-    gl.getExtension('OES_texture_float');
-
     gridSize = gridSize || [96, 96];
     const [gridW, gridH] = gridSize;
 
@@ -272,12 +276,14 @@ export function createDemo(gl, layerWeights, gridSize) {
         return {programName, output}
     }
 
-    function createDenseTexture(params) {
-        const src = params.data || decodeArray(params.data_b64, Float32Array);
-        return twgl.createTexture(gl, {
-            minMag: gl.NEAREST, type: gl.FLOAT,
+    function createDenseInfo(params) {
+        const src = decodeArray(params.data_b64, Uint8Array);
+        const coefs = [params.weight_scale, params.bias_scale, 0.5];
+        const tex = twgl.createTexture(gl, {
+            minMag: gl.NEAREST,
             width: params.out_ch / 4, height: params.in_ch + 1, src: src
         });
+        return {tex, coefs};
     }
 
     const progs = createPrograms();
@@ -294,13 +300,15 @@ export function createDemo(gl, layerWeights, gridSize) {
     const updateBuf = createTensor(gridW, gridH, CHANNEL_N);
     const maskedUpdateBuf = createTensor(gridW, gridH, CHANNEL_N);
     
-    let layerTex1 = createDenseTexture(layerWeights[0]);
-    let layerTex2 = createDenseTexture(layerWeights[1]);
+    let layerTex1 = createDenseInfo(layerWeights[0]);
+    let layerTex2 = createDenseInfo(layerWeights[1]);
 
     const ops = [
         ()=>runLayer('perception', perceptionBuf, {'u_input': stateBuf}),
-        ()=>runLayer('dense', hiddenBuf, {'u_input': perceptionBuf, u_weightTex: layerTex1}),
-        ()=>runLayer('dense', updateBuf, {'u_input': hiddenBuf, u_weightTex: layerTex2}),
+        ()=>runLayer('dense', hiddenBuf, {'u_input': perceptionBuf,
+            u_weightTex: layerTex1.tex, u_weightCoefs:layerTex1.coefs}),
+        ()=>runLayer('dense', updateBuf, {'u_input': hiddenBuf,
+            u_weightTex: layerTex2.tex, u_weightCoefs: layerTex2.coefs}),
         ()=>runLayer('dropout', maskedUpdateBuf, {'u_input': updateBuf, 'u_seed': Math.random()*1000, 'u_udpateProbability': 0.5}),
         ()=>runLayer('update', newStateBuf, {'u_input': stateBuf, 'u_update': maskedUpdateBuf}),
     ];
@@ -342,10 +350,10 @@ export function createDemo(gl, layerWeights, gridSize) {
     }
 
     function setWeights(layerWeights) {
-        gl.deleteTexture(layerTex1);
-        gl.deleteTexture(layerTex2);
-        layerTex1 = createDenseTexture(layerWeights[0]);
-        layerTex2 = createDenseTexture(layerWeights[1]);
+        gl.deleteTexture(layerTex1.tex);
+        gl.deleteTexture(layerTex2.tex);
+        layerTex1 = createDenseInfo(layerWeights[0]);
+        layerTex2 = createDenseInfo(layerWeights[1]);
     }
 
     const _flushBuf = new Uint8Array(4);

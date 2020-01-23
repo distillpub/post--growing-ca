@@ -35,7 +35,7 @@ Show: <select id='visMode'></select>
   const gl = canvas.getContext("webgl");
 
   let demo;
-  const modelDir = 'webgl_models32/';
+  const modelDir = 'webgl_models8/';
 
   fetch(modelDir+'🦎.json').then(r => r.json()).then(layers => {
     demo = createDemo(gl, layers);
