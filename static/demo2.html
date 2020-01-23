@@ -19,6 +19,8 @@
   <span id="emojiSelector"></span>
 </p>
 
+<input type="checkbox" id="throttle"> Full throttle
+fps: <span id="fps"></span><br>
 <canvas id="c" width="512" , height="512"></canvas><br>
 Show: <select id='visMode'></select>
 <button id="resetButton">Reset</button>
@@ -102,7 +104,6 @@ Show: <select id='visMode'></select>
   }
 
   canvas.addEventListener("touchmove", e=>{
-//    e.preventDefault();
     if (!demo)
       return;
     const ox = e.target.offsetLeft;
@@ -115,29 +116,44 @@ Show: <select id='visMode'></select>
       const y = Math.floor(my / canvas.height * h);
       demo.paint(x, y, 8, 'clear');
     }
-    
-      //const [x, y] = getMousePos(e);
-    //console.log(x, y);
-    //demo.paint(x, y, 8, 'clear');
   }, false);
+
+  let lastDrawTime;
+  let stepsPerFrame = 1;
 
   function render(time) {
     if (!demo)
       return;
-    demo.step();
+
+    let stepN = 1;
+    if (document.getElementById('throttle').checked && lastDrawTime) {
+      if (time - lastDrawTime < 18) {
+        stepsPerFrame += 1;
+      } else {
+        stepsPerFrame = Math.max(1, stepsPerFrame-1);
+      }
+      stepN = stepsPerFrame;
+    }
+    lastDrawTime = time;
+    
+    for (let i=0; i<stepN; ++i) {
+      demo.step();
+    }
     twgl.bindFramebufferInfo(gl);
     const mode = document.getElementById("visMode").value;
     demo.draw(mode);
+    
+    document.getElementById("fps").innerText = demo.fps();
     requestAnimationFrame(render);
   }
-
 
   function benchmark() {
     if (!demo)
       return;
     document.getElementById('log').innerHTML += demo.benchmark();
   }
-
   document.getElementById('benchmarkButton').onclick = benchmark;
+
+  
 
 </script>

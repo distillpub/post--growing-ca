@@ -327,9 +327,28 @@ export function createDemo(gl, layerWeights, gridSize) {
         paint(gridW/2, gridH/2, 1, 'seed');
     }
 
+    let fpsStartTime;
+    let fpsCount = 0;
+    let lastFpsCount = '';
+    function fps() {
+        return lastFpsCount;
+    }
+
     function step() {
         for (const op of ops) op();
         [stateBuf, newStateBuf] = [newStateBuf, stateBuf]
+
+        fpsCount += 1;
+        let time = Date.now();
+        if (!fpsStartTime)
+            fpsStartTime = time;
+        const fpsInterval = 1000;
+        if (time-fpsStartTime > fpsInterval) {
+            time = Date.now();
+            lastFpsCount = (fpsCount * 1000/(time-fpsStartTime)).toFixed(1);
+            fpsStartTime = time;
+            fpsCount = 0;
+        }
     }
 
     const visModes = ['color', 'state', 'perception', 'hidden', 'update', 'maskedUpdate'];
@@ -390,5 +409,5 @@ export function createDemo(gl, layerWeights, gridSize) {
     
     }
 
-    return {reset, step, draw, benchmark, setWeights, paint, visModes, gridSize};
+    return {reset, step, draw, benchmark, setWeights, paint, visModes, gridSize, fps, flush};
 }
