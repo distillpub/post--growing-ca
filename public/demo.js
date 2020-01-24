@@ -212,7 +212,7 @@ function decodeArray(s, arrayType) {
 }
 
 
-export function createDemo(gl, layerWeights, gridSize) {
+export function createCA(gl, layerWeights, gridSize) {
     gridSize = gridSize || [96, 96];
     const [gridW, gridH] = gridSize;
 
@@ -412,4 +412,160 @@ export function createDemo(gl, layerWeights, gridSize) {
     }
 
     return {reset, step, draw, benchmark, setWeights, paint, visModes, gridSize, fps, flush};
+}
+
+
+
+
+const DEMO_HTML = `
+<style>
+.demoCanvas {
+  border: 1px solid black;
+  image-rendering: pixelated;
+  touch-action: none;
+
+}
+</style>
+
+<p>Select target:
+  <span id="emojiSelector"></span>
+</p>
+
+<input type="checkbox" id="throttle"> Full throttle
+IPS: <span id="fps"></span><br>
+<canvas id="c" class="demoCanvas" width="512" , height="512"></canvas><br>
+Show: <select id='visMode'></select>
+<button id="resetButton">Reset</button>
+<button id="benchmarkButton">Benchmark</button>
+<br>
+<pre id='log'>
+</pre>
+`
+
+export function createDemo(divId) {
+    const $ = q=>document.querySelector(divId+' '+q);
+    $('').innerHTML = DEMO_HTML;
+
+
+    const canvas = $('#c');
+    const gl = canvas.getContext("webgl");
+  
+    let demo;
+    const modelDir = 'webgl_models8/';
+  
+    fetch(modelDir+'🦎.json').then(r => r.json()).then(layers => {
+      demo = createCA(gl, layers);
+      const sel = $('#visMode');
+      for (const mode of demo.visModes) {
+        sel.innerHTML += `<option value="${mode}">${mode}</option>`;
+      }
+  
+      $('#resetButton').onclick = demo.reset;
+  
+      requestAnimationFrame(render);
+    });
+  
+    const modelSel = $('#emojiSelector');
+    for (let c of '😀💥👁🦎🐠🦋🐞🕸🥨🎄') {
+      modelSel.innerHTML += `<span>${c}</span>`;
+    }
+    modelSel.innerHTML += `<span>planarian</span>`;
+    modelSel.onclick = async e => {
+      if (!demo)
+        return;
+      const emoji = e.target.innerText;
+      const url = modelDir+`${emoji}.json`;
+      const r = await fetch(url);
+      const model = await r.json();
+      demo.setWeights(model);
+      demo.reset();
+    }
+  
+    function getMousePos(e) {
+      const [w, h] = demo.gridSize;
+      const x = Math.floor(e.offsetX / canvas.width * w);
+      const y = Math.floor(e.offsetY / canvas.height * h);
+      return [x, y];
+    }
+  
+    let doubleClick = false;
+  
+    canvas.onmousedown = e => {
+      e.preventDefault();
+      if (!demo)
+        return;
+      const [x, y] = getMousePos(e);
+      if (e.buttons == 1) {
+        if (doubleClick) {
+          demo.paint(x, y, 1, 'seed');
+          doubleClick = false;
+        } else {
+          doubleClick = true;
+          setTimeout(()=>{
+            doubleClick = false;
+          }, 300);
+          demo.paint(x, y, 8, 'clear');
+        }
+      }
+    }
+    canvas.onmousemove = e => {
+      e.preventDefault();
+      if (!demo)
+        return;
+      if (e.buttons == 1) {
+        const [x, y] = getMousePos(e);
+        demo.paint(x, y, 8, 'clear');
+      }
+    }
+  
+    canvas.addEventListener("touchmove", e=>{
+      if (!demo)
+        return;
+      const ox = e.target.offsetLeft;
+      const oy = e.target.offsetTop;
+      for (const t of e.touches) {
+        const mx = t.clientX - ox;
+        const my = t.clientY - oy;
+        const [w, h] = demo.gridSize;
+        const x = Math.floor(mx / canvas.width * w);
+        const y = Math.floor(my / canvas.height * h);
+        demo.paint(x, y, 8, 'clear');
+      }
+    }, false);
+  
+    let lastDrawTime;
+    let stepsPerFrame = 1;
+  
+    function render(time) {
+      if (!demo)
+        return;
+  
+      let stepN = 1;
+      if ($('#throttle').checked && lastDrawTime) {
+        if (time - lastDrawTime < 18) {
+          stepsPerFrame += 1;
+        } else {
+          stepsPerFrame = Math.max(1, stepsPerFrame-1);
+        }
+        stepN = stepsPerFrame;
+      }
+      lastDrawTime = time;
+      
+      for (let i=0; i<stepN; ++i) {
+        demo.step();
+      }
+      twgl.bindFramebufferInfo(gl);
+      const mode = $("#visMode").value;
+      demo.draw(mode);
+      
+      $("#fps").innerText = demo.fps();
+      requestAnimationFrame(render);
+    }
+  
+    function benchmark() {
+      if (!demo)
+        return;
+      $('#log').innerHTML += demo.benchmark();
+    }
+    $('#benchmarkButton').onclick = benchmark;
 }
