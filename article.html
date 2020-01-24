@@ -13,7 +13,12 @@
 
 <p>So - what is so special about differentiable update rules? They will allow us to use the powerful language of loss functions to express our wishes, and the developed machinery of gradient-based numerical optimization to fulfill them. The art of stacking together differentiable functions, and optimizing their parameters to perform various tasks, has a long history. In recent years it has flourished under various names, such as (Deep) Neural Networks, Deep Learning or Differentiable Programming.</p>
 <h2>Model</h2>
-<figure><img src="figures/model.svg"></figure>
+<p><figure style="margin-left:auto; margin-right: auto; grid-column:page; width:100%; max-width:1200px;">
+  <object data="figures/model.svg" type="image/svg+xml" style="width:100%"></object>
+  <figcaption style="max-width:300px;">
+  An illustration of the model used.
+  </figcaption>
+</figure></p>
 
 <p><strong>Cell state</strong></p>
 <p>We will represent each cell state as a vector of 16 real values (see the figure above). The first three channels represent the cell color visible to us (RGB). The target pattern has color channel values in range [0.0, 1.0] and an alpha equal to 1.0 for foreground pixels, and 0.0 for background. </p>
@@ -88,8 +93,14 @@
 
 
 <h2>Experiment 1: Learning to Grow</h2>
+<p><figure style="margin-left:auto; margin-right: auto; grid-column:page; width:100%; max-width:900px;">
+  <object data="figures/training.svg" type="image/svg+xml" style="width:100%"></object>
+  <figcaption style="max-width:300px;">
+  An illustration of the training algorithm. Orange arrows denote gradient flow. Dark grey arrows denote forward pass.
+  </figcaption>
+</figure></p>
 
-<p><img src="figures/training.svg">We are going to initialize the grid with zeros, except a single seed cell in the center, which will have all channels except RGB set to one. We set RGB channels to zeros because we want the seed point to be with alpha<=0.1 visible on the white background.</p>
+<p>We are going to initialize the grid with zeros, except a single seed cell in the center, which will have all channels except RGB set to one. We set RGB channels to zeros because we want the seed point to be with alpha<=0.1 visible on the white background.</p>
 
 <p>Once the grid is initialized, we can iteratively apply the update rule. We sample a random number of CA steps from the [64, 96] range for each training step, as we want the pattern to be stable across a number of iterations. This should be a sufficient number of steps to grow the pattern of the size we work with (40x40), even considering the stochastic nature of our update rule.</p>
 
