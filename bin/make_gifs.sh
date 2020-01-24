@@ -2,7 +2,7 @@
 
 palette="/tmp/palette.png"
 
-for f in static/figures/*.mp4; do
+for f in ./static/figures/*.mp4; do
   gif="${f%%.*}.gif"
   if [ ! -f "$gif" ] || [ "$f" -nt "$gif" ]; then
     echo $f
