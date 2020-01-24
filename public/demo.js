@@ -423,6 +423,7 @@ const DEMO_HTML = `
   border: 1px solid black;
   image-rendering: pixelated;
   touch-action: none;
+  width: 100%;
 
 }
 </style>
@@ -433,7 +434,7 @@ const DEMO_HTML = `
 
 <input type="checkbox" id="throttle"> Full throttle
 IPS: <span id="fps"></span><br>
-<canvas id="c" class="demoCanvas" width="512" , height="512"></canvas><br>
+<canvas id="c" class="demoCanvas"></canvas><br>
 Show: <select id='visMode'></select>
 <button id="resetButton">Reset</button>
 <button id="benchmarkButton">Benchmark</button>
@@ -449,6 +450,8 @@ export function createDemo(divId) {
 
     const canvas = $('#c');
     const gl = canvas.getContext("webgl");
+    canvas.width = 96*6;
+    canvas.height = 96*6;
   
     let demo;
     const modelDir = 'webgl_models8/';
@@ -483,8 +486,8 @@ export function createDemo(divId) {
   
     function getMousePos(e) {
       const [w, h] = demo.gridSize;
-      const x = Math.floor(e.offsetX / canvas.width * w);
-      const y = Math.floor(e.offsetY / canvas.height * h);
+      const x = Math.floor(e.offsetX / canvas.clientWidth * w);
+      const y = Math.floor(e.offsetY / canvas.clientHeight * h);
       return [x, y];
     }
   
@@ -524,11 +527,11 @@ export function createDemo(divId) {
       const ox = e.target.offsetLeft;
       const oy = e.target.offsetTop;
       for (const t of e.touches) {
-        const mx = t.clientX - ox;
-        const my = t.clientY - oy;
+        const mx = t.pageX - ox;
+        const my = t.pageY - oy;
         const [w, h] = demo.gridSize;
-        const x = Math.floor(mx / canvas.width * w);
-        const y = Math.floor(my / canvas.height * h);
+        const x = Math.floor(mx / canvas.clientWidth * w);
+        const y = Math.floor(my / canvas.clientHeight * h);
         demo.paint(x, y, 8, 'clear');
       }
     }, false);
