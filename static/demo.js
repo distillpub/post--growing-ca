@@ -304,13 +304,14 @@ export function createDemo(gl, layerWeights, gridSize) {
     let layerTex2 = createDenseInfo(layerWeights[1]);
 
     const ops = [
-        ()=>runLayer('perception', perceptionBuf, {'u_input': stateBuf}),
-        ()=>runLayer('dense', hiddenBuf, {'u_input': perceptionBuf,
+        ()=>runLayer('perception', perceptionBuf, {u_input: stateBuf}),
+        ()=>runLayer('dense', hiddenBuf, {u_input: perceptionBuf,
             u_weightTex: layerTex1.tex, u_weightCoefs:layerTex1.coefs}),
-        ()=>runLayer('dense', updateBuf, {'u_input': hiddenBuf,
+        ()=>runLayer('dense', updateBuf, {u_input: hiddenBuf,
             u_weightTex: layerTex2.tex, u_weightCoefs: layerTex2.coefs}),
-        ()=>runLayer('dropout', maskedUpdateBuf, {'u_input': updateBuf, 'u_seed': Math.random()*1000, 'u_udpateProbability': 0.5}),
-        ()=>runLayer('update', newStateBuf, {'u_input': stateBuf, 'u_update': maskedUpdateBuf}),
+        ()=>runLayer('dropout', maskedUpdateBuf, {u_input: updateBuf,
+            u_seed: Math.random()*1000, u_udpateProbability: 0.5}),
+        ()=>runLayer('update', newStateBuf, {u_input: stateBuf, u_update: maskedUpdateBuf}),
     ];
 
     reset();
@@ -385,6 +386,7 @@ export function createDemo(gl, layerWeights, gridSize) {
     }
 
     function benchmark() {
+        flush();
         const stepN = 100;
         const start = Date.now();
         for (let i = 0; i < stepN; ++i)
