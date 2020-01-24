@@ -1,4 +1,4 @@
-'''Advanced web-developemnt server
+'''Advanced web-development server
 
 Runs ./bin/make.sh whenever index.html is fetched.
 '''
