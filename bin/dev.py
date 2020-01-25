@@ -3,16 +3,22 @@
 Runs ./bin/make.sh whenever index.html is fetched.
 '''
 import os
-from http.server import SimpleHTTPRequestHandler, test
+import six
+if six.PY3:
+    from http.server import SimpleHTTPRequestHandler, test
+else:
+    from SimpleHTTPServer import SimpleHTTPRequestHandler, test
 
 class Handler(SimpleHTTPRequestHandler):
-    def __init__(self, *arg, **kw):
-        super().__init__(directory='public/', *arg, **kw)
-
     def do_GET(self):
         if self.path in ['/', '/index.html']:
-            os.system('./bin/make.sh')
-        super().do_GET()
+            os.system('../bin/make.sh')
+        if six.PY3:
+            super().do_GET()
+        else:
+            SimpleHTTPRequestHandler.do_GET(self)
 
 if __name__ == '__main__':
-    test(HandlerClass=Handler, port=8080)
+    os.chdir('public')
+    test(HandlerClass=Handler)
+
