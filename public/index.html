@@ -192,7 +192,7 @@
 <p>      gradient_y, </p>
 <p>      axis=0)</p>
 
-<p>  return preception_grid</p>
+<p>  return perception_grid</p>
 </d-code>
 
 <ul><li><strong>Update rule.</strong> Each cell now applies a series of operations to the perception vector, consisting of typical differentiable programming building blocks, such as 1x1-convolutions and ReLU nonlinearities, which we call the cell’s “update rule”. Recall that the update rule is learned, but every cell runs the same update rule. The network parametrizing this update rule consists of approximately 8,000 parameters. Inspired by residual neural networks, the update rule outputs an incremental update to the cell’s state, which applied to the cell before the next time step. The update rule is designed to exhibit “do-nothing” initial behaviour - implemented by initializing the weights of the final convolutional layer in the update rule with zero. We also forego applying a ReLU to the output of the last layer of the update rule as the incremental updates to the cell state must necessarily be able to both add or subtract from the state.</li></ul></ul>
@@ -214,7 +214,7 @@
 
 <d-code block="" language="python">
 <p>def stochastic_update(state_grid, dy_grid):</p>
-<p>  # Zero out a random fraction of the updates</p>
+<p>  # Zero out a random fraction of the updates.</p>
 <p>  rand_mask = cast(random(64, 64) < 0.5, float32)</p>
 <p>  ds_grid = ds_grid * rand_mask</p>
 <p>  return state_grid + ds_grid</p>
@@ -224,7 +224,7 @@
 
 <d-code block="" language="python">
 <p>def alive_masking(state_grid):</p>
-<p>  # Take the alpha channel as the measure of "life"</p>
+<p>  # Take the alpha channel as the measure of "life".</p>
 <p>  alive = max_pool(state_grid[:, :, 3], (3,3)) > 0.1</p>
 <p>  state_grid = state_grid * cast(alive, float32)</p>
 <p>  return state_grid</p>
@@ -242,7 +242,7 @@
   </figcaption>
 </figure></p>
 
-<p>We are going to initialize the grid with zeros, except a single seed cell in the center, which will have all channels except RGB set to one. We set RGB channels to zeros because we want the seed point to be with alpha<=0.1 visible on the white background.</p>
+<p>We are going to initialize the grid with zeros, except a single seed cell in the center, which will have all channels except RGB set to one. We set RGB channels to zeros because we want the seed point to be with $α<strong> \leq</strong> 0.1$ visible on the white background.</p>
 
 <p>Once the grid is initialized, we can iteratively apply the update rule. We sample a random number of CA steps from the [64, 96] range for each training step, as we want the pattern to be stable across a number of iterations. This should be a sufficient number of steps to grow the pattern of the size we work with (40x40), even considering the stochastic nature of our update rule.</p>
 
@@ -344,7 +344,24 @@
   \end{bmatrix}
 </d-math></figure>
 <p>This simple modification of the perceptive field produces rotated versions of the pattern without retraining the model for any angle of choice!</p>
+
+<p>In a perfect world, not quantized by individual cells in a lattice, this would not be too surprising, as, after all, one would expect the perceived gradients in $\vec{x}$ and $\vec{y}$ to be invariant to the chosen angle. However, successfully rotating the pattern in a pixel based model suggests that it’s very robust to perturbations outside of those which it has experienced during training, as rotating such a pattern on a 2D grid involves a mapping that’s not necessarily bijective and in most cases will involve interpolating.</p>
+
 <figure><img src="figures/rotation.png"></figure>
+<h2>WebGL Playground</h2>
+<p>Starting from our first experiments on Neural CA growth and regeneration, we wanted to challenge our models with new situations not seen during training, like removing large portions of the pattern, or seeding multiple instances side-by-side. To facilitate exploration and sharing of our models, we created a TensorFlow.js playground that allowed us to interact with trained models right in a browser. The code for exporting and loading CA models in TF.js format is available in the accompanying Colab notebook.</p>
+
+<p>Later during the work on this article, we decided to see how far we can push the performance and portability of this playground. We reimplemented all necessary operations from scratch using the WebGL API and GLSL shader language. This implementation powers the demo that can be found on the top of this page. We decided to quantize all model parameters and activations to 8-bit values, in order to maximize the performance and compatibility with mobile hardware.</p>
+
+<p>The quantization was largely an afterthought, that was not accounted for during training. That’s why there are slight differences in models’ behaviour between the online demo and the python version. Yet, most of CAs that we’ve trained, managed to survive the strong quantization without severe artifacts, although in a few cases we had to resort to selecting the best model checkpoint between a few training runs.</p>
+
+<p>We noticed that our models are more sensitive to the accuracy of small magnitude activation values, rather than large ones. That’s why we use non-linear $\arctan$ function to compress the unbounded activation values to the bounded segment, preserving the highest accuracy around zero.</p>
+
+<p>Here is the detailed explanation of controls available in the demo on top of this page:</p>
+<ul><li><strong>Target</strong> - selects one of a few models that is pre-trained to generate a specific image</li></ul>
+<li><strong>Model type</strong> -<strong> </strong>selects between model variants that are trained following different procedures, described in the experiment sections 1-3.</li>
+<li><strong>Rotation</strong> - controls the rotation applied to the perceived activation gradients, as described in the experiment section 4.</li>
+<li><strong>Speed</strong> - simulation speed, from “paused” to “Full throttle”. “Full throttle” mode tries to load the GPU with as many iterations per second as possible. Use it cautiously, as it can result in reduction of system performance.</li></ul>
 <h2>Glossary:</h2>
 <p>### Let’s define the terms we use exactly such that we’re consistent throughout the paper and in future discussions.</p>
 
