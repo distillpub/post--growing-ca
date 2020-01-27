@@ -64,15 +64,32 @@
     }
 
     #demoControls {
-      max-width: 200px;
+      font-size: 0.9em;
+    }
+   
+    @media (min-width: 768px) {
+      #demoControls {
+        max-width: 200px;
+      }
     }
 
     #status {
       color: rgba(0, 0, 0, 0.6);
       font-size: 12px;
+      position: absolute;
     }
-    
+    figure img {
+     width: inherit;
+    }
 
+    #experimentSelector * {
+      cursor: pointer;
+      border: 1px solid lightgrey;
+      white-space: nowrap;
+    }
+    #experimentSelector *:hover {
+      background-color: lightyellow;
+    }
   </style>
 
   <d-title>
@@ -86,17 +103,30 @@
     </p>
     <div class="l-body grid" id="demo">
       <div>
-        <canvas id="c" class="demoCanvas"></canvas><br>
-        <p id='status'></p>
+        <span id='status'></span>
+        <canvas id="c" class="demoCanvas">
+        </canvas><br>
+        
       </div>
       <div id="demoControls" class="side">
-        <p>Select target:
-          <span id="emojiSelector"></span>
-        </p>
+        <b>Model type:</b> <span id='experimentSelector'>
+            <span id="ex1">growing</span>
+            <span id="ex2">+ persistent</span>
+            <span id="ex3">+ regenerating</span>
+        </span> <br>
+        Select target: <span id="emojiSelector"></span> <br>
         <input type="checkbox" id="throttle"> Full throttle<br>
-        Model: <span id='experimentSelector'><span id="ex1">grow</span> <span id="ex2">+ persist</span> <span id="ex3">+ regenerate</span></span><br>
+        <label for="angle">Rotation</label>
+        <input type="range" id="angle" min="0" max="360" step="10" value="0"> <br>
+        
         <button id="resetButton">Reset</button>
       </div>
+      <figcaption>
+        This demo invites the reader to interact with pattern-generating
+        Neural Cellular Automata models described in this article.
+        Click or tap the image to erase the part of the pattern and see it regenerate.
+        Double clicking places a new seed cell on the grid.
+      </figcaption>
     </div>
   </d-title>
 
@@ -134,7 +164,6 @@
 
 <p><strong>Cellular Automaton </strong><strong>rule</strong></p>
 <p>Now it’s time to define the update rule. Our CA runs on a regular 2D grid of 16-dimensional vectors, essentially a 3D array of shape [height, width, 16]. We want to apply the same operation to each cell, and the result of this operation can only depend on the small (say 3x3) neighborhood of the cell. This is heavily reminiscent of the convolution operation, one of the cornerstones of signal processing and differential programming. Convolution is a linear operation, but it can be combined with other per-cell operations to produce a complex update rule, capable of learning the desired behaviour. Our cell update rule can be split into the following phases, applied in order:</p>
-<p>Todo eyvind@: width of code to be smaller</p>
 
 <ul><li><strong>Perception.</strong> This step defines what each cell perceives of the environment surrounding it. We implement this via a 3x3 convolution with a fixed kernel. One may argue that defining this kernel is superfluous - after all we could simply have the cell learn the requisite perception kernel coefficients. Our choice of fixed operations are motivated by the fact that real life cells often rely only on chemical gradients to guide the organism development. Thus, we are using classical Sobel filters to estimate the partial derivatives of cell state channels in x- and y- directions, forming a 2D gradient vector for each state channel. We concatenate those gradients with the cells own states, forming a 16*2+16=48 dimensional <i>perception vector</i>, or rather <i>percepted vector, </i>for each cell.</li></ul></ul>
 
@@ -146,30 +175,36 @@
 <p>             [-1, 0, +1]]</p>
 <p>  sobel_y = transpose(sobel_x)</p>
 
-<p>  # Convolve the Sobel filters with the current states. The convolution occurs</p>
-<p>  # in the x, y and channel dimension.</p>
-<p>  perceived_gradient_x_grid = conv2d(sobel_x, state_grid)</p>
-<p>  perceived_gradient_y_grid = conv2d(sobel_y, state_grid)</p>
+<p>  # Convolve the Sobel filters </p>
+<p>  # with the current states. </p>
+<p>  # The convolution occurs in </p>
+<p>  # the x, y and channel dimension.</p>
+<p>  gradient_x = conv2d(sobel_x, state_grid)</p>
+<p>  gradient_y = conv2d(sobel_y, state_grid)</p>
 <p>  </p>
-<p>  # Concatenate the cell's own state channels, the gradients of channels in x</p>
-<p>  # and the gradient of channels in y. </p>
-<p>  perception_grid = concat(state_grid, perceived_gradient_x_grid, perceived_gradient_y_grid, axis=0)</p>
+<p>  # Concatenate the cell's state channels, </p>
+<p>  # the gradients of channels in x and </p>
+<p>  # the gradient of channels in y. </p>
+<p>  perception_grid = concat(</p>
+<p>      state_grid, </p>
+<p>      gradient_x, </p>
+<p>      gradient_y, </p>
+<p>      axis=0)</p>
 
 <p>  return preception_grid</p>
-
 </d-code>
 
-<ul><li><strong>Update rule.</strong> </li></ul></ul>
-<p>Each cell now applies a series of operations to the perception vector, consisting of typical differentiable programming building blocks, such as 1x1-convolutions and ReLU nonlinearities, which we call the cell’s “update rule”. Recall that the update rule is learned, but every cell runs the same update rule. The network parametrizing this update rule consists of approximately 8,000 parameters. Inspired by residual neural networks, the update rule outputs an incremental update to the cell’s state, which applied to the cell before the next time step. The update rule is designed to exhibit “do-nothing” initial behaviour - implemented by initializing the weights of the final convolutional layer in the update rule with zero. We also forego applying a ReLU to the output of the last layer of the update rule as the incremental updates to the cell state must necessarily be able to both add or subtract from the state.</p>
+<ul><li><strong>Update rule.</strong> Each cell now applies a series of operations to the perception vector, consisting of typical differentiable programming building blocks, such as 1x1-convolutions and ReLU nonlinearities, which we call the cell’s “update rule”. Recall that the update rule is learned, but every cell runs the same update rule. The network parametrizing this update rule consists of approximately 8,000 parameters. Inspired by residual neural networks, the update rule outputs an incremental update to the cell’s state, which applied to the cell before the next time step. The update rule is designed to exhibit “do-nothing” initial behaviour - implemented by initializing the weights of the final convolutional layer in the update rule with zero. We also forego applying a ReLU to the output of the last layer of the update rule as the incremental updates to the cell state must necessarily be able to both add or subtract from the state.</li></ul></ul>
 
 <d-code block="" language="python">
-<p># The following pseudocode operates on a single cell’s perception </p>
-<p># vector. Our reference implementation uses 1D convolutions on the </p>
-<p># grid state for performance reasons.</p>
+<p># Thee following pseudocode operates on</p>
+<p># a single cell’s perception vector. </p>
+<p># Our reference implementation uses </p>
+<p># 1D convolutions for performance reasons.</p>
 <p>def update(perception_vector):</p>
-<p>  x = dense(perception_vector, output_length=128)</p>
+<p>  x = dense(perception_vector, output_len=128)</p>
 <p>  x = relu(x)</p>
-<p>  ds = dense(x, output_length=16, weights_initialization=0.0)</p>
+<p>  ds = dense(x, output_len=16, weights_init=0.0)</p>
 <p>  return ds</p>
 </d-code>
 
@@ -179,7 +214,8 @@
 <d-code block="" language="python">
 <p>def stochastic_update(state_grid, dy_grid):</p>
 <p>  # Zero out a random fraction of the updates</p>
-<p>  ds_grid = ds_grid * cast(random(64, 64) < 0.5, float32)</p>
+<p>  rand_mask = cast(random(64, 64) < 0.5, float32)</p>
+<p>  ds_grid = ds_grid * rand_mask</p>
 <p>  return state_grid + ds_grid</p>
 </d-code>
 
@@ -214,7 +250,10 @@
 <p>Once the optimisation converges, we can run simulations to see how our learned CA grows the butterfly, starting from the seed cell. Let’s see what happens when we run it for longer than the number of steps used during training. The animation below shows the behaviour of a few different models, trained to generate different emoji patterns.</p>
 
 
-<p></p>
+<figure>    <video loop autoplay playsinline muted>
+      <source src="figures/unstable.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video></figure>
 
 <p>We can see that different training runs can lead to models with drastically different long term behaviours. Some tend to die out, some don’t seem to know how to stop growing, but some happen to be almost stable! How can we steer the training towards producing persistent patterns all the time?</p>
 <h2>Experiment 2: What persists, exists</h2>
@@ -222,24 +261,37 @@
 
 <p>Our first experiment encouraged the dynamics of the the coupled system to evolve in such a way as to reach the target pattern in about 64 to 96 steps, starting from a single black pixel (the seed). This likely defines an attractor acting only over the space of states visited between the seed and the target pattern. However we have likely not influenced the dynamics of the CA for the states it experiences shortly after 96 steps - it’s entirely possible the target pattern at this point is not a fixed point and that the dynamics result in a divergence to a previously unvisited state.</p>
 
-<p>One strategy to solve this is letting the CA iterate for much a longer time and periodically applying the loss against the target, training the system by backpropagation through these longer time intervals. Intuitively we claim that with longer the time intervals and several applications of loss, the model is more likely to create an attractor for the target shape. However, longer time periods substantially increase the training time and more importantly, the memory requirements, given that the entire episode’s intermediate activations must be stored in memory for a backwards-pass to occur. </p>
+<p>One strategy to solve this is letting the CA iterate for much a longer time and periodically applying the loss against the target, training the system by backpropagation through these longer time intervals. Intuitively we claim that with longer the time intervals and several applications of loss, the model is more likely to create an attractor for the target shape. However, longer time periods substantially increase the training time and more importantly, the memory requirements, given that the entire episode’s intermediate activations must be stored in memory for a backwards-pass to occur.</p>
 
-<p>Instead, we propose a sample-pool based strategy to a similar effect. We define a pool of seed states to start the iterations from, initially filled with the single black pixel seed state.</p>
+<p>Instead, we propose a “sample pool” based strategy to a similar effect. We define a pool of seed states to start the iterations from, initially filled with the single black pixel seed state. We then sample a batch from this pool which we use in our training step. To prevent the equivalent of “catastrophic forgetting” we replace one sample in this batch with the original, single-pixel seed state. After concluding the training step , we replace samples in the pool that were sampled for the batch with the output states from the training step over this batch. The animation below shows all the entries in the pool every 100 training steps. </p>
 
-<ul><li>Initialize the pool full with seed patterns</li></ul>
-<li>For each training step</li>
-<ul><li>Sample a batch of patterns from the pool</li></ul>
-<li>Replace one of the sampled patterns for the seed</li>
-<li>Iterate CA update for a number of steps, starting from the sampled batch</li>
-<li>Apply the target loss function to final patterns, produced by the CA run</li>
-<li>Use the gradient of loss over CA parameters to perform the training step</li>
-<li>Put final patterns back to the pool, replacing the sampled ones</li></ul>
+<p>Early on in the training process, the random dynamics in the system allow the model to end up in various incomplete and incorrect states. As these states are sampled from the pool, we refine the dynamics to be able to recover from such states. Finally, as the model becomes more robust at going from a seed state to the target state, the samples in the pool reflect this and are more likely to be very close to the target pattern, allowing the training to refine these almost completed patterns further. </p>
+
+<d-code block="" language="python">
+<p>def pool_training():</p>
+<p>  # Set alpha and hidden channels to (1.0).</p>
+<p>  seed = zeros(64, 64, 16)</p>
+<p>  seed[64//2, 64//2, 3:] = 1.0</p>
+<p>  target = targets['butterfly']</p>
+<p>  pool = [seed] * 1024</p>
+<p>  for i in range(training_iterations):</p>
+<p>    idxs, batch = pool.sample(32)</p>
+<p>    # Sort by loss, descending.</p>
+<p>    batch = sort_desc(batch, loss(batch))</p>
+<p>    # Replace the highest-loss sample with seed.</p>
+<p>    batch[0] = seed</p>
+<p>    # Perform training.</p>
+<p>    outputs, loss = train(batch, target)</p>
+<p>    # Place outputs back in the pool.</p>
+<p>    pool[idxs] = outputs </p>
+</d-code>
+
 
 <p>Essentially, we use the previous final states as new starting points to force our CA to learn how to persist or even improve an already formed pattern, in addition to being able to grow it from a seed. This makes it possible to add a periodical loss for significantly longer time intervals than otherwise possible, encouraging the generation of an attractor as the target shape in our coupled system. We also noticed that reseeding the highest loss sample in the batch, instead of a random one, makes training more stable at the initial stages, as it helps to clean up the low quality states from the pool.</p>
 
 <p>Here is what a typical training progress of CA rule looks like. It learns to stabilize the pattern in parallel while refining its features.</p>
 
-<figure>    <video loop autoplay muted>
+<figure>    <video loop autoplay playsinline muted>
       <source src="figures/train_steps_damage_0.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
@@ -248,7 +300,7 @@
 <h2>Experiment 3: Learning to regenerate</h2>
 <p>In addition to being able to grow their own bodies, living creatures are great at maintaining them. Not only worn out skin gets replaced with new, but very heavy damages to complex vital organs can be regenerated by some creatures. Is there a chance that some of the models we trained above have regenerative capabilities?</p>
 
-<figure>    <video loop autoplay muted>
+<figure>    <video loop autoplay playsinline muted>
       <source src="figures/regen1.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
@@ -259,14 +311,14 @@
 
 <p>If we want our model to show more consistent and accurate regenerative capabilities, we can try to increase the basin of attraction for our attractor, that is the space of cell configurations that naturally gravitate towards our target shape. We will do this by damaging a few pool-sampled states before each training step. The systems will now also have to be able to regenerate from configurations damaged by random circles. Our hope is that it will generalize to regenerate from as many types of damage as possible.</p>
 
-<figure>    <video loop autoplay muted>
+<figure>    <video loop autoplay playsinline muted>
       <source src="figures/batches.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
 </figure>
 <p>The animation above shows training progress, which includes sample damage. We sample 8 states from the pool. Then we replace the highest-loss sample (leftmost) with the seed, and damage three lowest-loss (rightmost) states by setting a random circular region to zeros. The bottom row shows states after CA iterations applied. These states get injected back into the pool.</p>
 
-<figure>    <video loop autoplay muted>
+<figure>    <video loop autoplay playsinline muted>
       <source src="figures/regen2.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
@@ -306,7 +358,7 @@
 <h2>Related work</h2>
 <h3>Artificial Self-Organising systems</h3>
 <h3>CA and PDEs</h3>
-<p>There exists a giant body of literature that describes various flavours of cellular automata and PDE systems, and their applications to modelling physical, biological or even social systems. Albeit it would be impossible to present a just overview of this field in a few lines, we hereby describe some prominent examples that inspired this work.  Alan Turing introduced his famous Turing patterns back in 1952, suggesting how reaction-diffusion systems can be a valid modeling for chemical behaviors during morphogenesis. A particularly inspiring reaction-diffusion model that stood the test of time is the Gray-Scott model <d-cite key="Pearson189"></d-cite>, showing an extreme variety of behaviors controlled by just a few variables.</p>
+<p>There exists a giant body of literature that describes various flavours of cellular automata and PDE systems, and their applications to modelling physical, biological or even social systems. Albeit it would be impossible to present a just overview of this field in a few lines, we hereby describe some prominent examples that inspired this work.  Alan Turing introduced his famous Turing patterns back in 1952 <d-cite key="turing1990chemical"></d-cite>, suggesting how reaction-diffusion systems can be a valid modeling for chemical behaviors during morphogenesis. A particularly inspiring reaction-diffusion model that stood the test of time is the Gray-Scott model <d-cite key="Pearson189"></d-cite>, showing an extreme variety of behaviors controlled by just a few variables.</p>
 <p>Todo add CA history.</p>
 
 <p>[OLD]</p>

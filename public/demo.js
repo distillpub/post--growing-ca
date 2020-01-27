@@ -85,20 +85,26 @@ const PROGRAMS = {
         setOutput(result);
     }`,
     perception: `
+    uniform float u_angle;
+    const mat3 sobel = mat3(-1.0, 0.0, 1.0, -2.0, 0.0, 2.0, -1.0, 0.0, 1.0)/8.0;
+
     void main() {
         vec2 xy = getOutputXY();
         float ch = getOutputChannel();
-        float filterIdx = floor(ch/u_input.depth4);
+        float filterBand = floor(ch/u_input.depth4);
         float inputCh = mod(ch, u_input.depth4);
-        if (filterIdx == 0.0) {
+        if (filterBand == 0.0) {
             setOutput(u_input_read(xy, inputCh));
         } else {
-            vec2 dx = (filterIdx == 1.0) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-            vec2 dy = vec2(dx.y, dx.x);
-            vec4 v = (u_input_read(xy+dx, inputCh)-u_input_read(xy-dx, inputCh))*2.0+
-                    u_input_read(xy+dx+dy, inputCh)-u_input_read(xy-dx+dy, inputCh)+
-                    u_input_read(xy+dx-dy, inputCh)-u_input_read(xy-dx-dy, inputCh);
-            setOutput(v / 8.0);
+          vec4 dx = vec4(0.0), dy = vec4(0.0);
+          for (int y=0; y<3; ++y)
+          for (int x=0; x<3; ++x) {
+            vec4 a = u_input_read(xy+vec2(float(x-1), float(y-1)), inputCh);
+            dx += sobel[y][x]*a;
+            dy += sobel[x][y]*a;
+          }
+          float s = sin(u_angle), c = cos(u_angle);
+          setOutput(filterBand == 1.0 ? dx*c-dy*s : dx*s+dy*c);
         }
     }`,
     dense: `
@@ -303,8 +309,13 @@ export function createCA(gl, layerWeights, gridSize) {
     let layerTex1 = createDenseInfo(layerWeights[0]);
     let layerTex2 = createDenseInfo(layerWeights[1]);
 
+    let rotationAngle = 0.0;
+    function setAngle(v) {
+      rotationAngle = v/180.0*Math.PI;
+    }
+
     const ops = [
-        ()=>runLayer('perception', perceptionBuf, {u_input: stateBuf}),
+        ()=>runLayer('perception', perceptionBuf, {u_input: stateBuf, u_angle: rotationAngle}),
         ()=>runLayer('dense', hiddenBuf, {u_input: perceptionBuf,
             u_weightTex: layerTex1.tex, u_weightCoefs:layerTex1.coefs}),
         ()=>runLayer('dense', updateBuf, {u_input: hiddenBuf,
@@ -418,7 +429,8 @@ export function createCA(gl, layerWeights, gridSize) {
     
     }
 
-    return {reset, step, draw, benchmark, setWeights, paint, visModes, gridSize, fps, flush, getStepCount};
+    return {reset, step, draw, benchmark, setWeights, paint, visModes, gridSize, 
+      fps, flush, getStepCount, setAngle};
 }
 
 
@@ -550,6 +562,7 @@ export function createDemo(divId) {
       }
       lastDrawTime = time;
       
+      demo.setAngle($('#angle').value);
       for (let i=0; i<stepN; ++i) {
         demo.step();
       }

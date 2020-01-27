@@ -64,15 +64,32 @@
     }
 
     #demoControls {
-      max-width: 200px;
+      font-size: 0.9em;
+    }
+   
+    @media (min-width: 768px) {
+      #demoControls {
+        max-width: 200px;
+      }
     }
 
     #status {
       color: rgba(0, 0, 0, 0.6);
       font-size: 12px;
+      position: absolute;
     }
-    
+    figure img {
+     width: inherit;
+    }
 
+    #experimentSelector * {
+      cursor: pointer;
+      border: 1px solid lightgrey;
+      white-space: nowrap;
+    }
+    #experimentSelector *:hover {
+      background-color: lightyellow;
+    }
   </style>
 
   <d-title>
@@ -86,17 +103,30 @@
     </p>
     <div class="l-body grid" id="demo">
       <div>
-        <canvas id="c" class="demoCanvas"></canvas><br>
-        <p id='status'></p>
+        <span id='status'></span>
+        <canvas id="c" class="demoCanvas">
+        </canvas><br>
+        
       </div>
       <div id="demoControls" class="side">
-        <p>Select target:
-          <span id="emojiSelector"></span>
-        </p>
+        <b>Model type:</b> <span id='experimentSelector'>
+            <span id="ex1">growing</span>
+            <span id="ex2">+ persistent</span>
+            <span id="ex3">+ regenerating</span>
+        </span> <br>
+        Select target: <span id="emojiSelector"></span> <br>
         <input type="checkbox" id="throttle"> Full throttle<br>
-        Model: <span id='experimentSelector'><span id="ex1">grow</span> <span id="ex2">+ persist</span> <span id="ex3">+ regenerate</span></span><br>
+        <label for="angle">Rotation</label>
+        <input type="range" id="angle" min="0" max="360" step="10" value="0"> <br>
+        
         <button id="resetButton">Reset</button>
       </div>
+      <figcaption>
+        This demo invites the reader to interact with pattern-generating
+        Neural Cellular Automata models described in this article.
+        Click or tap the image to erase the part of the pattern and see it regenerate.
+        Double clicking places a new seed cell on the grid.
+      </figcaption>
     </div>
   </d-title>
 
