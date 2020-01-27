@@ -7,6 +7,7 @@
   <style>
   </style>
   <script src="twgl.min.js"></script>
+  <script type="module" src="./ca.js"></script>
   <script type="module" src="./demo.js"></script>
 </head>
 
@@ -285,7 +286,6 @@
 <p>    # Place outputs back in the pool.</p>
 <p>    pool[idxs] = outputs </p>
 </d-code>
-
 
 <p>Essentially, we use the previous final states as new starting points to force our CA to learn how to persist or even improve an already formed pattern, in addition to being able to grow it from a seed. This makes it possible to add a periodical loss for significantly longer time intervals than otherwise possible, encouraging the generation of an attractor as the target shape in our coupled system. We also noticed that reseeding the highest loss sample in the batch, instead of a random one, makes training more stable at the initial stages, as it helps to clean up the low quality states from the pool.</p>
 
