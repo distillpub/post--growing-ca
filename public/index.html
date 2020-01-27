@@ -1,18 +1,18 @@
 <!doctype html>
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://distill.pub/template.v2.js"></script>
-    <style>
-    </style>
-    <script src="twgl.min.js"></script>
-    <script type="module" src="./demo.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://distill.pub/template.v2.js"></script>
+  <style>
+  </style>
+  <script src="twgl.min.js"></script>
+  <script type="module" src="./demo.js"></script>
 </head>
 
 <body>
 
-    <d-front-matter>
+  <d-front-matter>
     <script type="text/json">{
       "title": "Growing Cellular Automata",
       "description": "Differentiable Self-Organisation: Cellular Automata model of Morphogenesis.",
@@ -52,26 +52,58 @@
         ]
       }
     }</script>
-    </d-front-matter>
+  </d-front-matter>
 
-    <d-title>
-        <h1>Growing Neural Cellular Automata</h1>
-        <p>Differentiable Model of Morphogenesis</p>
+  <style>
+    .demoCanvas {
+      border: 1px solid lightgrey;
+      image-rendering: pixelated;
+      touch-action: none;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    #demoControls {
+      max-width: 200px;
+    }
+
+    #status {
+      color: rgba(0, 0, 0, 0.6);
+      font-size: 12px;
+    }
     
-        <p>
-            <b>Please propose edits in the Google Docs
-            <a href="https://docs.google.com/document/d/11UnoVOWPncooSMQFqBigcLzP-dVyalmgrLa2pWFxhuM">
-                version of this document</a>.</b>
-        </p>
-        <p id='demo'>
-        </p>
-    </d-title>
 
-    <script type="module">
-        import { createDemo } from './demo.js'
-        createDemo('#demo');
-    </script>
-  <d-article>
+  </style>
+
+  <d-title>
+    <h1>Growing Neural Cellular Automata</h1>
+    <p>Differentiable Model of Morphogenesis</p>
+
+    <p>
+      <b>Please propose edits in the Google Docs
+        <a href="https://docs.google.com/document/d/11UnoVOWPncooSMQFqBigcLzP-dVyalmgrLa2pWFxhuM">
+          version of this document</a>.</b>
+    </p>
+    <div class="l-body grid" id="demo">
+      <div>
+        <canvas id="c" class="demoCanvas"></canvas><br>
+        <p id='status'></p>
+      </div>
+      <div id="demoControls" class="side">
+        <p>Select target:
+          <span id="emojiSelector"></span>
+        </p>
+        <input type="checkbox" id="throttle"> Full throttle<br>
+        Model: <span id='experimentSelector'><span id="ex1">grow</span> <span id="ex2">+ persist</span> <span id="ex3">+ regenerate</span></span><br>
+        <button id="resetButton">Reset</button>
+      </div>
+    </div>
+  </d-title>
+
+  <script type="module">
+    import { createDemo } from './demo.js'
+    createDemo('demo');
+  </script><d-article>
 <p>All multicellular organisms begin their life as a single egg cell. Being able to build their own bodies is probably the most fundamental skill every living creature possesses. Morphogenesis (the proocess of an organism’s shape development) is one of the most striking examples of self-organisation. Cells, tiny building blocks of bodies, communicate with their neighbors to decide the shape of organs and body plans, where to grow each organ, how to interconnect them, and when to eventually stop.</p>
 
 <p>This process is extremely robust to perturbations. Even when the organism is fully developed, it still has the capability to repair damage - a process known as regeneration. Some creatures can fully regenerate vital organs, limbs, eyes, or even parts of the brain! Morphogenesis is a surprisingly adaptive process. Sometimes even a very atypical development process can result in a viable organism - for example, the parts of an early embryo cut into pieces will each form a complete individual - monozygotic twins!</p>

@@ -12,7 +12,7 @@ else:
 class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path in ['/', '/index.html']:
-            os.system('../bin/make.sh')
+            os.system('cd .. && bin/make.sh')
         if six.PY3:
             super().do_GET()
         else:

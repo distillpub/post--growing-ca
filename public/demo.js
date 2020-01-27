@@ -2,6 +2,7 @@
  * @fileoverview Description of this file.
  */
 
+const MAX_ACTIVATION_VALUE = 10.0;
 
 const vs_code = `
     attribute vec4 position;
@@ -157,8 +158,6 @@ const PROGRAMS = {
     update: `
     ${defInput('u_update')}
 
-    
-
     varying vec2 uv;
     
     void main() {
@@ -234,9 +233,10 @@ export function createCA(gl, layerWeights, gridSize) {
         const attachments = [{ minMag: gl.NEAREST }];
         const fbi = twgl.createFramebufferInfo(gl, attachments, texW, texH);
         const tex = fbi.attachments[0];
-        let packScaleBias = [Math.PI, 127.0/255.0];
+        const C = Math.atan(MAX_ACTIVATION_VALUE);
+        let packScaleBias = [2.0*C, 127.0/255.0];
         if (activation == 'relu') {
-            packScaleBias = [Math.PI/2, 0.0];
+            packScaleBias = [C, 0.0];
         }
         return { _type: 'tensor',
             fbi, w, h, depth, gridW, gridH, depth4, tex,
@@ -314,8 +314,6 @@ export function createCA(gl, layerWeights, gridSize) {
         ()=>runLayer('update', newStateBuf, {u_input: stateBuf, u_update: maskedUpdateBuf}),
     ];
 
-    reset();
-
     function paint(x, y, r, brush) {
         runLayer('paint', stateBuf, {
             u_pos: [x, y], u_r: r,
@@ -323,22 +321,31 @@ export function createCA(gl, layerWeights, gridSize) {
         });
     }
 
-    function reset() {
-        paint(0, 0, 10000, 'clear');
-        paint(gridW/2, gridH/2, 1, 'seed');
-    }
 
     let fpsStartTime;
     let fpsCount = 0;
     let lastFpsCount = '';
+    let totalStepCount = 0;
     function fps() {
         return lastFpsCount;
     }
+    function getStepCount() {
+      return totalStepCount;
+    }
+
+    
+    function reset() {
+      paint(0, 0, 10000, 'clear');
+      paint(gridW/2, gridH/2, 1, 'seed');
+      totalStepCount = 0;
+    }
+    reset();
 
     function step() {
         for (const op of ops) op();
         [stateBuf, newStateBuf] = [newStateBuf, stateBuf]
 
+        totalStepCount += 1;
         fpsCount += 1;
         let time = Date.now();
         if (!fpsStartTime)
@@ -411,41 +418,17 @@ export function createCA(gl, layerWeights, gridSize) {
     
     }
 
-    return {reset, step, draw, benchmark, setWeights, paint, visModes, gridSize, fps, flush};
+    return {reset, step, draw, benchmark, setWeights, paint, visModes, gridSize, fps, flush, getStepCount};
 }
 
 
 
-
-const DEMO_HTML = `
-<style>
-.demoCanvas {
-  border: 1px solid black;
-  image-rendering: pixelated;
-  touch-action: none;
-  width: 100%;
-
-}
-</style>
-
-<p>Select target:
-  <span id="emojiSelector"></span>
-</p>
-
-<input type="checkbox" id="throttle"> Full throttle
-IPS: <span id="fps"></span><br>
-<canvas id="c" class="demoCanvas"></canvas><br>
-Show: <select id='visMode'></select>
-<button id="resetButton">Reset</button>
-<button id="benchmarkButton">Benchmark</button>
-<br>
-<pre id='log'>
-</pre>
-`
 
 export function createDemo(divId) {
-    const $ = q=>document.querySelector(divId+' '+q);
-    $('').innerHTML = DEMO_HTML;
+    const root = document.getElementById(divId);
+    const $ = q=>root.querySelector(q);
+    const $$ = q=>root.querySelectorAll(q);
+    //$('').innerHTML = DEMO_HTML;
 
 
     const canvas = $('#c');
@@ -455,33 +438,46 @@ export function createDemo(divId) {
   
     let demo;
     const modelDir = 'webgl_models8/';
-  
-    fetch(modelDir+'🦎.json').then(r => r.json()).then(layers => {
-      demo = createCA(gl, layers);
-      const sel = $('#visMode');
-      for (const mode of demo.visModes) {
-        sel.innerHTML += `<option value="${mode}">${mode}</option>`;
+    let target = '🦎';
+    let experiment = 'ex3';
+
+    async function updateModel() {
+      const r = await fetch(`${modelDir}/${experiment}_${target}.json`);
+      const model = await r.json();
+      if (!demo) {
+        demo = createCA(gl, model);
+        // $('#visMode').innerHTML = demo.visModes.map(s=>`<option value="${s}">${s}</option>`).join();
+        $('#resetButton').onclick = demo.reset;
+        requestAnimationFrame(render);
+      } else {
+        demo.setWeights(model);
+        demo.reset();
       }
-  
-      $('#resetButton').onclick = demo.reset;
-  
-      requestAnimationFrame(render);
-    });
+      $$('#emojiSelector *').forEach(e=>{
+        e.style.backgroundColor = e.id==target?'Gold':'';
+      });
+      $$('#experimentSelector *').forEach(e=>{
+        e.style.backgroundColor = e.id<=experiment?'Gold':'';
+      });
+
+    }
+    updateModel();
   
     const modelSel = $('#emojiSelector');
     for (let c of '😀💥👁🦎🐠🦋🐞🕸🥨🎄') {
-      modelSel.innerHTML += `<span>${c}</span>`;
+      modelSel.innerHTML += `<span id="${c}">${c}</span>`;
     }
-    modelSel.innerHTML += `<span>planarian</span>`;
+    modelSel.innerHTML += `<span id="planarian">planarian</span>`;
     modelSel.onclick = async e => {
-      if (!demo)
-        return;
-      const emoji = e.target.innerText;
-      const url = modelDir+`${emoji}.json`;
-      const r = await fetch(url);
-      const model = await r.json();
-      demo.setWeights(model);
-      demo.reset();
+      target = e.target.innerText;
+      if (target == 'planarian') {
+        experiment = 'ex3';
+      }
+      updateModel();
+    }
+    $('#experimentSelector').onclick = async e=>{
+      experiment = e.target.id;
+      updateModel();
     }
   
     function getMousePos(e) {
@@ -558,17 +554,12 @@ export function createDemo(divId) {
         demo.step();
       }
       twgl.bindFramebufferInfo(gl);
-      const mode = $("#visMode").value;
-      demo.draw(mode);
+      demo.draw();
       
-      $("#fps").innerText = demo.fps();
+      $("#status").innerText = `Step ${demo.getStepCount()}`;
+      const ips = demo.fps();
+      if (ips)
+        $("#status").innerText += ` (${ips} step/sec)`;
       requestAnimationFrame(render);
     }
-  
-    function benchmark() {
-      if (!demo)
-        return;
-      $('#log').innerHTML += demo.benchmark();
-    }
-    $('#benchmarkButton').onclick = benchmark;
 }
