@@ -42,7 +42,7 @@ const PREFIX = `
     }
 
     vec4 _read(Tensor tensor, sampler2D tex, vec2 pos, float ch) {
-        vec2 p = pos/tensor.size;
+        vec2 p = fract(pos/tensor.size);
         ch += 0.5;
         float tx = floor(mod(ch, tensor.gridSize.x));
         float ty = floor(ch / tensor.gridSize.x);
@@ -99,7 +99,8 @@ const PROGRAMS = {
           vec4 dx = vec4(0.0), dy = vec4(0.0);
           for (int y=0; y<3; ++y)
           for (int x=0; x<3; ++x) {
-            vec4 a = u_input_read(xy+vec2(float(x-1), float(y-1)), inputCh);
+            vec2 p = xy+vec2(float(x-1), float(y-1));
+            vec4 a = u_input_read(p, inputCh);
             dx += sobel[y][x]*a;
             dy += sobel[x][y]*a;
           }
@@ -168,17 +169,12 @@ const PROGRAMS = {
     
     void main() {
       vec2 xy = getOutputXY();
-      vec2 sxy = u_output.size-xy;
-      float edge = min(min(xy.x, xy.y), min(sxy.x, sxy.y));
-      if (edge < 1.0) {
-          setOutput(vec4(0.0));
-          return;
-      }
       float preMaxAlpha=0.0, postMaxAlpha=0.0;
       for (float y=-1.0; y<=1.0; ++y)
       for (float x=-1.0; x<=1.0; ++x) {
-          float preAlpha = u_input_read(xy+vec2(x, y), 0.0).a;
-          float updateAlpha = u_update_read(xy+vec2(x, y), 0.0).a;
+          vec2 p = xy+vec2(x, y);
+          float preAlpha = u_input_read(p, 0.0).a;
+          float updateAlpha = u_update_read(p, 0.0).a;
           float postAlpha = preAlpha+updateAlpha;
           preMaxAlpha = max(preAlpha, preMaxAlpha);
           postMaxAlpha = max(postAlpha, postMaxAlpha);
