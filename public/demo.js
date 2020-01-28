@@ -12,7 +12,6 @@ export function createDemo(divId) {
     const root = document.getElementById(divId);
     const $ = q=>root.querySelector(q);
     const $$ = q=>root.querySelectorAll(q);
-    //$('').innerHTML = DEMO_HTML;
 
 
     const canvas = $('#c');
@@ -72,7 +71,11 @@ export function createDemo(divId) {
     }
   
     let doubleClick = false;
-  
+    function onClick(x, y) {
+
+    }
+
+
     canvas.onmousedown = e => {
       e.preventDefault();
       if (!demo)

@@ -1,36 +1,38 @@
 <d-article>
-<p>All multicellular organisms begin their life as a single egg cell. Being able to build their own bodies is probably the most fundamental skill every living creature possesses. Morphogenesis (the proocess of an organism’s shape development) is one of the most striking examples of self-organisation. Cells, tiny building blocks of bodies, communicate with their neighbors to decide the shape of organs and body plans, where to grow each organ, how to interconnect them, and when to eventually stop.</p>
+<p>All multicellular organisms begin their life as a single egg cell. Being able to build their own bodies is probably the most fundamental skill every living creature possesses. Morphogenesis (the process of an organism’s shape development) is one of the most striking examples of self-organisation. Cells, the tiny building blocks of bodies, communicate with their neighbors to decide the shape of organs and body plans, where to grow each organ, how to interconnect them, and when to eventually stop.</p>
 
 <p>This process is extremely robust to perturbations. Even when the organism is fully developed, it still has the capability to repair damage - a process known as regeneration. Some creatures can fully regenerate vital organs, limbs, eyes, or even parts of the brain! Morphogenesis is a surprisingly adaptive process. Sometimes even a very atypical development process can result in a viable organism - for example, the parts of an early embryo cut into pieces will each form a complete individual - monozygotic twins!</p>
 
 <p>Imagine if we could design systems of such plasticity and robustness: structures and machines that could grow and repair themselves. Biologists still do not fully understand the algorithms that enable cells to cooperate toward anatomical goals. To help crack the puzzle of the morphogenetic code, and also exploit the insights of biology to create self-repairing systems in real life, we try to replicate some of the desired properties in an <i>in silico</i> experiment.</p>
 
-<p>The idea of modelling large-scale phenomena by simulating tiny local interactions found its way into engineering and scientific practice in the form of partial derivative equation systems (PDEs) and numerical methods for solving them, particle systems, and various kinds of Cellular Automata.</p>
+<p>The idea of modelling large-scale phenomena by simulating tiny local interactions found its way into engineering and scientific practice in the form of partial derivative equation systems (PDEs) and employing numerical methods for solving them, particle systems, and various kinds of Cellular Automata.</p>
 
-<p>We will focus on Cellular Automata (CA) models. These typically consist of a grid of cells being iteratively updated, following the same set of rules applied to each cell on every step. The new state of a cell depends only on the states of cells in its tiny neighborhood. Despite the apparent simplicity, CAs often demonstrate rich, interesting behaviours, and have a long history of being applied to biological phenomena modeling.</p>
+<p>We will focus on Cellular Automata (CA) models. These typically consist of a grid of cells being iteratively updated, with the same set of rules being applied to each cell at every step. The new state of a cell depends only on the states of cells in its tiny neighborhood. Despite the apparent simplicity, CAs often demonstrate rich, interesting behaviours, and have a long history of being applied to biological phenomena modeling.</p>
 
-<p>Let’s try to develop a cellular automata update rule that, starting from a single cell, will produce a predefined multicellular pattern on a 2D grid. This is our analogous toy model of organism development. To design the CA, we must specify the possible cell states, and their update function. Typical CA models represent cell states with a set of discrete values, although variants using vectors of continuous values exist. The use of continuous values has the virtue of allowing the update rule to be a differentiable function of a cell’s neighbourhood state. The rules that guide individual cell behavior based on the local environment is analogous to the low-level hardware specification that is encoded by the genome of an organism. Running our model for a set amount of steps from a starting configuration will reveal the patterning behavior that is enabled by such hardware.</p>
+<p>Let’s try to develop a cellular automata update rule that, starting from a single cell, will produce a predefined multicellular pattern on a 2D grid. This is our analogous toy model of organism development. To design the CA, we must specify the possible cell states, and their update function. Typical CA models represent cell states with a set of discrete values, although variants using vectors of continuous values exist. The use of continuous values has the virtue of allowing the update rule to be a differentiable function of a cell’s neighbourhood state. The rules that guide individual cell behavior based on the local environment are analogous to the low-level hardware specification encoded by the genome of an organism. Running our model for a set amount of steps from a starting configuration will reveal the patterning behavior that is enabled by such hardware.</p>
 
-<p>So - what is so special about differentiable update rules? They will allow us to use the powerful language of loss functions to express our wishes, and the developed machinery of gradient-based numerical optimization to fulfill them. The art of stacking together differentiable functions, and optimizing their parameters to perform various tasks, has a long history. In recent years it has flourished under various names, such as (Deep) Neural Networks, Deep Learning or Differentiable Programming.</p>
+<p>So - what is so special about differentiable update rules? They will allow us to use the powerful language of loss functions to express our wishes, and the extensive existing machinery around gradient-based numerical optimization to fulfill them. The art of stacking together differentiable functions, and optimizing their parameters to perform various tasks has a long history. In recent years it has flourished under various names, such as (Deep) Neural Networks, Deep Learning or Differentiable Programming.</p>
 <h2>Model</h2>
 <p><figure style="margin-left:auto; margin-right: auto; grid-column:page; width:100%; max-width:1200px;">
   <object data="figures/model.svg" type="image/svg+xml" style="width:100%"></object>
   <figcaption style="max-width:300px;">
-  An illustration of the model used.
+  A single update step of the model.
   </figcaption>
 </figure></p>
 
-<p><strong>Cell state</strong></p>
-<p>We will represent each cell state as a vector of 16 real values (see the figure above). The first three channels represent the cell color visible to us (RGB). The target pattern has color channel values in range [0.0, 1.0] and an alpha equal to 1.0 for foreground pixels, and 0.0 for background. </p>
+<h3>Cell State</h3>
+<p>We will represent each cell state as a vector of 16 real values (see the figure above). The first three channels represent the cell color visible to us (RGB). The target pattern has color channel values in range $[0.0, 1.0]$ and an $\alpha$ equal to 1.0 for foreground pixels, and 0.0 for background. </p>
 
-<p>The alpha channel (α) has a special meaning: it marks living cells, belonging to the currently grown pattern. In particular, cells having α > 0.1, and their neighbors, are considered “living”, while other cells are empty, and have all state values explicitly set to zero at every step. Thus cells with α<strong> </strong>> 0.1 can be thought of as “mature”, while their neighbors with alpha<=0.1 are “growing”, and can become mature if their alpha reaches the threshold.</p>
+<p>The alpha channel ($\alpha$) has a special meaning: it demarcates living cells, those belonging to the pattern being grown. In particular, cells having $\alpha > 0.1$ and their neighbors are considered “living”. Other cells are “dead” or empty and have their state vector values explicitly set to 0.0 at each time step. Thus cells with $\alpha > 0.1$ can be thought of as “mature”, while their neighbors with $\alpha \leq 0.1$ are “growing”, and can become mature if their alpha passes the 0.1 threshold.</p>
 
-<p>Hidden channels don’t have a predefined meaning, and it’s up to the update rule to decide what to use them for. They can be interpreted as concentrations of some chemicals, electric potentials or some other signaling mechanism that are used by cells to orchestrate the growth. In terms of our biological analogy - all our cells share the same genome (update rule) and are only differentiated by the information encoded in their state vector.</p>
+<p></p>
 
-<p><strong>Cellular Automaton </strong><strong>rule</strong></p>
-<p>Now it’s time to define the update rule. Our CA runs on a regular 2D grid of 16-dimensional vectors, essentially a 3D array of shape [height, width, 16]. We want to apply the same operation to each cell, and the result of this operation can only depend on the small (say 3x3) neighborhood of the cell. This is heavily reminiscent of the convolution operation, one of the cornerstones of signal processing and differential programming. Convolution is a linear operation, but it can be combined with other per-cell operations to produce a complex update rule, capable of learning the desired behaviour. Our cell update rule can be split into the following phases, applied in order:</p>
+<p>Hidden channels don’t have a predefined meaning, and it’s up to the update rule to decide what to use them for. They can be interpreted as concentrations of some chemicals, electric potentials or some other signaling mechanism that are used by cells to orchestrate the growth. In terms of our biological analogy - all our cells share the same genome (update rule) and are only differentiated by the information encoded the chemical signalling they receive and emit and store internally (their state vectors).</p>
 
-<ul><li><strong>Perception.</strong> This step defines what each cell perceives of the environment surrounding it. We implement this via a 3x3 convolution with a fixed kernel. One may argue that defining this kernel is superfluous - after all we could simply have the cell learn the requisite perception kernel coefficients. Our choice of fixed operations are motivated by the fact that real life cells often rely only on chemical gradients to guide the organism development. Thus, we are using classical Sobel filters to estimate the partial derivatives of cell state channels in x- and y- directions, forming a 2D gradient vector for each state channel. We concatenate those gradients with the cells own states, forming a 16*2+16=48 dimensional <i>perception vector</i>, or rather <i>percepted vector, </i>for each cell.</li></ul></ul>
+<h3>Cellular Automaton rule</h3>
+<p>Now it’s time to define the update rule. Our CA runs on a regular 2D grid of 16-dimensional vectors, essentially a 3D array of shape [height, width, 16]. We want to apply the same operation to each cell, and the result of this operation can only depend on the small (3x3) neighborhood of the cell. This is heavily reminiscent of the convolution operation, one of the cornerstones of signal processing and differential programming. Convolution is a linear operation, but it can be combined with other per-cell operations to produce a complex update rule, capable of learning the desired behaviour. Our cell update rule can be split into the following phases, applied in order:</p>
+
+<ul><li><strong>Perception.</strong> This step defines what each cell perceives of the environment surrounding it. We implement this via a 3x3 convolution with a fixed kernel. One may argue that defining this kernel is superfluous - after all we could simply have the cell learn the requisite perception kernel coefficients. Our choice of fixed operations are motivated by the fact that real life cells often rely only on chemical gradients to guide the organism development. Thus, we are using classical Sobel filters to estimate the partial derivatives of cell state channels in the $\vec{x}$ and $\vec{y}$ directions, forming a 2D gradient vector in each direction, for each state channel. We concatenate those gradients with the cells own states, forming a $16*2+16=48$ dimensional <i>perception vector</i>, or rather <i>percepted vector, </i>for each cell.</li></ul>
 
 <d-code block="" language="python">
 <p>def perceive(state_grid):</p>
@@ -59,10 +61,10 @@
 <p>  return perception_grid</p>
 </d-code>
 
-<ul><li><strong>Update rule.</strong> Each cell now applies a series of operations to the perception vector, consisting of typical differentiable programming building blocks, such as 1x1-convolutions and ReLU nonlinearities, which we call the cell’s “update rule”. Recall that the update rule is learned, but every cell runs the same update rule. The network parametrizing this update rule consists of approximately 8,000 parameters. Inspired by residual neural networks, the update rule outputs an incremental update to the cell’s state, which applied to the cell before the next time step. The update rule is designed to exhibit “do-nothing” initial behaviour - implemented by initializing the weights of the final convolutional layer in the update rule with zero. We also forego applying a ReLU to the output of the last layer of the update rule as the incremental updates to the cell state must necessarily be able to both add or subtract from the state.</li></ul></ul>
+<ul><li><strong>Update rule.</strong> Each cell now applies a series of operations to the perception vector, consisting of typical differentiable programming building blocks, such as 1x1-convolutions and ReLU nonlinearities, which we call the cell’s “update rule”. Recall that the update rule is learned, but every cell runs the same update rule. The network parametrizing this update rule consists of approximately 8,000 parameters. Inspired by residual neural networks, the update rule outputs an incremental update to the cell’s state, which applied to the cell before the next time step. The update rule is designed to exhibit “do-nothing” initial behaviour - implemented by initializing the weights of the final convolutional layer in the update rule with zero. We also forego applying a ReLU to the output of the last layer of the update rule as the incremental updates to the cell state must necessarily be able to both add or subtract from the state.</li></ul>
 
 <d-code block="" language="python">
-<p># Thee following pseudocode operates on</p>
+<p># The following pseudocode operates on</p>
 <p># a single cell’s perception vector. </p>
 <p># Our reference implementation uses </p>
 <p># 1D convolutions for performance reasons.</p>
@@ -74,7 +76,7 @@
 </d-code>
 
 
-<ul><li><strong>Stochastic cell update.</strong> Typical cellular automata update all cells simultaneously. This implies the existence of a global clock, synchronizing all cells. Relying on global synchronisation is not something one expects from a self-organising system. We relax this requirement by assuming that each cell performs an update independently, waiting for a random time interval between updates. To model this behaviour we apply a random per-cell mask to update vectors, setting all update values to zero with some predefined probability (we use 0.5 during training). This operation can be also seen as an application of per-cell dropout to update vectors.</li></ul></ul>
+<ul><li><strong>Stochastic cell update.</strong> Typical cellular automata update all cells simultaneously. This implies the existence of a global clock, synchronizing all cells. Relying on global synchronisation is not something one expects from a self-organising system. We relax this requirement by assuming that each cell performs an update independently, waiting for a random time interval between updates. To model this behaviour we apply a random per-cell mask to update vectors, setting all update values to zero with some predefined probability (we use 0.5 during training). This operation can be also seen as an application of per-cell dropout to update vectors.</li></ul>
 
 <d-code block="" language="python">
 <p>def stochastic_update(state_grid, dy_grid):</p>
@@ -84,7 +86,7 @@
 <p>  return state_grid + ds_grid</p>
 </d-code>
 
-<ul><li><strong>Living cell masking.</strong> We want to model the growth process that starts with a single cell, and don’t want empty cells to participate in computations or carry any hidden state. We enforce this by explicitly setting all channels of empty cells to zeros. A cell is considered empty if there is no “mature” (alpha>0.1) cell in its 3x3 neightborhood.</li></ul></ul>
+<ul><li><strong>Living cell masking.</strong> We want to model the growth process that starts with a single cell, and don’t want empty cells to participate in computations or carry any hidden state. We enforce this by explicitly setting all channels of empty cells to zeros. A cell is considered empty if there is no “mature” (alpha>0.1) cell in its 3x3 neightborhood.</li></ul>
 
 <d-code block="" language="python">
 <p>def alive_masking(state_grid):</p>
@@ -124,11 +126,16 @@
 <h2>Experiment 2: What persists, exists</h2>
 <p>One way of understanding why the previous experiment was unstable is to draw a parallel to dynamical systems. We can consider every cell to be a dynamical system, with each cell sharing the same dynamics, and all cells being locally coupled amongst themselves. When we train our cell update model - we are adjusting these dynamics. Our goal is to find dynamics for the cell such that the target pattern is an attractor and a fixed-point of the the overall coupled system. </p>
 
-<p>Our first experiment encouraged the dynamics of the the coupled system to evolve in such a way as to reach the target pattern in about 64 to 96 steps, starting from a single black pixel (the seed). This likely defines an attractor acting only over the space of states visited between the seed and the target pattern. However we have likely not influenced the dynamics of the CA for the states it experiences shortly after 96 steps - it’s entirely possible the target pattern at this point is not a fixed point and that the dynamics result in a divergence to a previously unvisited state.</p>
+<p>Our first experiment encouraged the dynamics of the coupled system to evolve in such a way as to reach the target pattern in about 64 to 96 steps, starting from a single black pixel (the seed). This likely defines an attractor acting only over the space of states visited between the seed and the target pattern. However we have not explicitly influenced the dynamics of the CA for the states it experiences shortly after 96 steps - thus it is likely the target pattern at this point is not a fixed point and that the dynamics result in a divergence from the target pattern.</p>
 
 <p>One strategy to solve this is letting the CA iterate for much a longer time and periodically applying the loss against the target, training the system by backpropagation through these longer time intervals. Intuitively we claim that with longer the time intervals and several applications of loss, the model is more likely to create an attractor for the target shape. However, longer time periods substantially increase the training time and more importantly, the memory requirements, given that the entire episode’s intermediate activations must be stored in memory for a backwards-pass to occur.</p>
 
-<p>Instead, we propose a “sample pool” based strategy to a similar effect. We define a pool of seed states to start the iterations from, initially filled with the single black pixel seed state. We then sample a batch from this pool which we use in our training step. To prevent the equivalent of “catastrophic forgetting” we replace one sample in this batch with the original, single-pixel seed state. After concluding the training step , we replace samples in the pool that were sampled for the batch with the output states from the training step over this batch. The animation below shows all the entries in the pool every 100 training steps. </p>
+<p>Instead, we propose a “sample pool” based strategy to a similar effect. We define a pool of seed states to start the iterations from, initially filled with the single black pixel seed state. We then sample a batch from this pool which we use in our training step. To prevent the equivalent of “catastrophic forgetting” we replace one sample in this batch with the original, single-pixel seed state. After concluding the training step , we replace samples in the pool that were sampled for the batch with the output states from the training step over this batch. The animation below shows a random sample of the entries in the pool every 100 training steps.</p>
+
+<figure>    <video loop autoplay playsinline muted>
+      <source src="figures/pool.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video></figure>
 
 <p>Early on in the training process, the random dynamics in the system allow the model to end up in various incomplete and incorrect states. As these states are sampled from the pool, we refine the dynamics to be able to recover from such states. Finally, as the model becomes more robust at going from a seed state to the target state, the samples in the pool reflect this and are more likely to be very close to the target pattern, allowing the training to refine these almost completed patterns further. </p>
 
@@ -150,6 +157,7 @@
 <p>    # Place outputs back in the pool.</p>
 <p>    pool[idxs] = outputs </p>
 </d-code>
+
 
 <p>Essentially, we use the previous final states as new starting points to force our CA to learn how to persist or even improve an already formed pattern, in addition to being able to grow it from a seed. This makes it possible to add a periodical loss for significantly longer time intervals than otherwise possible, encouraging the generation of an attractor as the target shape in our coupled system. We also noticed that reseeding the highest loss sample in the batch, instead of a random one, makes training more stable at the initial stages, as it helps to clean up the low quality states from the pool.</p>
 
@@ -191,8 +199,8 @@
 
 <h2>Experiment 4: Rotating the perceptive field</h2>
 <p>As previously described, we model the cell perception of neighbouring cells by estimating gradient vectors of state channels with Sobel filters. One can also think that each agent has two sensors that perceive directional derivatives of state vectors across its neighborhood along x and y axes. What happens if we rotate those sensors? We can do this by replacing Sobel kernels with their 2D rotation matrix-weighted counterparts.</p>
-<figure><d-math block="">
-  \begin{bmatrix}
+<figure>$
+\begin{bmatrix}
   K_x \\
   K_y
   \end{bmatrix}
@@ -206,54 +214,33 @@
   Sobel_x \\
   Sobel_y
   \end{bmatrix}
-</d-math></figure>
+$</figure>
 <p>This simple modification of the perceptive field produces rotated versions of the pattern without retraining the model for any angle of choice!</p>
-
-<p>In a perfect world, not quantized by individual cells in a lattice, this would not be too surprising, as, after all, one would expect the perceived gradients in $\vec{x}$ and $\vec{y}$ to be invariant to the chosen angle. However, successfully rotating the pattern in a pixel based model suggests that it’s very robust to perturbations outside of those which it has experienced during training, as rotating such a pattern on a 2D grid involves a mapping that’s not necessarily bijective and in most cases will involve interpolating.</p>
-
 <figure><img src="figures/rotation.png"></figure>
+<p>In a perfect world, not quantized by individual cells in a lattice, this would not be too surprising, as, after all, one would expect the perceived gradients in $\vec{x}$ and $\vec{y}$ to be invariant to the chosen angle. However, successfully rotating the pattern in a pixel based model suggests that it’s very robust to perturbations outside of those which it has experienced during training, as rotating such a pattern on a 2D grid involves a mapping that’s not necessarily bijective and in most cases will involve interpolating between pixels. </p>
+
 <h2>WebGL Playground</h2>
 <p>Starting from our first experiments on Neural CA growth and regeneration, we wanted to challenge our models with new situations not seen during training, like removing large portions of the pattern, or seeding multiple instances side-by-side. To facilitate exploration and sharing of our models, we created a TensorFlow.js playground that allowed us to interact with trained models right in a browser. The code for exporting and loading CA models in TF.js format is available in the accompanying Colab notebook.</p>
 
 <p>Later during the work on this article, we decided to see how far we can push the performance and portability of this playground. We reimplemented all necessary operations from scratch using the WebGL API and GLSL shader language. This implementation powers the demo that can be found on the top of this page. We decided to quantize all model parameters and activations to 8-bit values, in order to maximize the performance and compatibility with mobile hardware.</p>
 
-<p>The quantization was largely an afterthought, that was not accounted for during training. That’s why there are slight differences in models’ behaviour between the online demo and the python version. Yet, most of CAs that we’ve trained, managed to survive the strong quantization without severe artifacts, although in a few cases we had to resort to selecting the best model checkpoint between a few training runs.</p>
+<p>The quantization was largely an afterthought, that was not accounted for during training. That’s why there are slight differences in models’ behaviours between the online demo and the python version. Yet, most of CAs that we’ve trained, managed to survive the strong quantization without severe artifacts, although in a few cases we had to resort to selecting the best model checkpoint between a few training runs.</p>
 
 <p>We noticed that our models are more sensitive to the accuracy of small magnitude activation values, rather than large ones. That’s why we use non-linear $\arctan$ function to compress the unbounded activation values to the bounded segment, preserving the highest accuracy around zero.</p>
 
 <p>Here is the detailed explanation of controls available in the demo on top of this page:</p>
-<ul><li><strong>Target</strong> - selects one of a few models that is pre-trained to generate a specific image</li></ul>
-<li><strong>Model type</strong> -<strong> </strong>selects between model variants that are trained following different procedures, described in the experiment sections 1-3.</li>
-<li><strong>Rotation</strong> - controls the rotation applied to the perceived activation gradients, as described in the experiment section 4.</li>
-<li><strong>Speed</strong> - simulation speed, from “paused” to “Full throttle”. “Full throttle” mode tries to load the GPU with as many iterations per second as possible. Use it cautiously, as it can result in reduction of system performance.</li></ul>
-<h2>Glossary:</h2>
-<p>### Let’s define the terms we use exactly such that we’re consistent throughout the paper and in future discussions.</p>
-
-<ul><li><strong>Cell</strong> - A single pixel in the grid and its corresponding <strong>state</strong>.</li></ul>
-<li><strong>(Cell) State - </strong>The internal 12/16 channels of state corresponding to each pixel. </li>
-<li><strong>(Cell) Perception (Vector) - </strong>The combination of one's own state and neighbouring states. eyvind@: not a huge fan of this name (name not clear whether it alludes to what’s been “perceived” or some parameters deciding how the perception process works) but it’s similar to existing nomenclature such as “perceptive field” so I guess it stays. </li>
-<li><strong>Hidden State</strong> - The portion of the Cell State which is <strong>not being rendered</strong>. eyvind@: again this is a bit tricky because it’s easily confused with hidden state in other contexts, such as RNNs and latent variable models.</li>
-<li></li></ul>
-
-
+<ul><li><strong>Target </strong>– selects one of a few models that is pre-trained to generate a specific image</li></ul>
+<ul><li><strong>Model type</strong> –<strong> </strong>selects between model variants that are trained following different procedures, described in the experiment sections 1-3.</li></ul>
+<ul><li><strong>Rotation</strong> – controls the rotation applied to the perceived activation gradients, as described in the experiment section 4.</li></ul>
+<ul><li><strong>Speed</strong> – simulation speed, from “paused” to “Full throttle”. “Full throttle” mode tries to load the GPU with as many iterations per second as possible. Use it cautiously, as it can result in reduction of system performance.</li></ul>
 <h2>Related work</h2>
 <h3>Artificial Self-Organising systems</h3>
 <h3>CA and PDEs</h3>
-<p>There exists a giant body of literature that describes various flavours of cellular automata and PDE systems, and their applications to modelling physical, biological or even social systems. Albeit it would be impossible to present a just overview of this field in a few lines, we hereby describe some prominent examples that inspired this work.  Alan Turing introduced his famous Turing patterns back in 1952 <d-cite key="turing1990chemical"></d-cite>, suggesting how reaction-diffusion systems can be a valid modeling for chemical behaviors during morphogenesis. A particularly inspiring reaction-diffusion model that stood the test of time is the Gray-Scott model <d-cite key="Pearson189"></d-cite>, showing an extreme variety of behaviors controlled by just a few variables.</p>
-<p>Todo add CA history.</p>
+<p>There exists a giant body of literature that describes various flavours of cellular automata and PDE systems, and their applications to modelling physical, biological or even social systems. Albeit it would be impossible to present a just overview of this field in a few lines, we hereby describe some prominent examples that inspired this work. Alan Turing introduced his famous Turing patterns back in 1952 <d-cite key="turing1990chemical"></d-cite>, suggesting how reaction-diffusion systems can be a valid modeling for chemical behaviors during morphogenesis. A particularly inspiring reaction-diffusion model that stood the test of time is the Gray-Scott model <d-cite key="Pearson189"></d-cite>, showing an extreme variety of behaviors controlled by just a few variables.</p>
+<p>Since when von Neumann introduced CA <d-cite key="10.5555/1102024"></d-cite> as models for self-replication, CA have been captivating researchers’ minds, who observed extremely complex behaviours emerging from very simple rules. Likewise, the broader audience was seduced by CA’s life-like behaviours thanks to Conway’s Game of Life <d-cite key="10.2307/24927642"></d-cite>. Perhaps motivated in part by the proof that something as simple as the Rule 110 is Turing complete, Worfram‘s \textit{A New Kind of Science} asks for a paradigm shift, centered around the extensive usage of elementary computer programs such as CA as tools for understanding the world.</p>
+<p>More recently, several researchers generalized Conway’s Game of life to work on more continuous domains. We were particularly inspired by Rafler’s SmoothLife <d-cite key="rafler2011generalization"></d-cite> and Chan’s Lenia <d-cite key="Chan_2019, Reinke2019IntrinsicallyME"></d-cite>, the latter of which also discovers and classifies entire species of “lifeforms”.</p>
 
-<p>[OLD]</p>
-<p>There exists a giant body of literature that describes various flavours of cellular automata and PDE systems, and their applications to modelling physical, biological or even social systems. We will list a few prominent examples, that inspired this work:</p>
-
-<ul><li>Von Neumann Cellular Automaton <d-cite key="10.5555/1102024"></d-cite></li></ul>
-<li>Turing Patterns</li>
-<li>Conway’s Game of Life</li>
-<li>Gray-Scott Reaction-Diffusion</li>
-<li>Wolfram’s A new kind of science <d-cite key="Wolfram2002ANK"></d-cite></li>
-<li>SmoothLife <d-cite key="rafler2011generalization"></d-cite></li>
-<li>Lenia - Biology of Artificial Life <d-cite key="Chan_2019"></d-cite></li></ul>
-
-<p>A number of researchers used evolutionary algorithms to find CA rules that reproduce predefined simple patterns (<d-cite key="10.1007/978-3-642-19167-1_2"></d-cite>, <d-cite key="Nichele2018CANEATEC"></d-cite>) <u>1</u>, <u>2</u>). For example, J. Miller <d-cite key="Miller2004"></d-cite> proposed a very similar experiment setup, using evolutionary algorithms to design a CA rule that could build and regenerate the French flag, starting from a seed cell.</p>
+<p>A number of researchers used evolutionary algorithms to find CA rules that reproduce predefined simple patterns (<d-cite key="10.1007/978-3-642-19167-1_2"></d-cite>, <d-cite key="Nichele2018CANEATEC"></d-cite>). For example, J. Miller <d-cite key="Miller2004"></d-cite> proposed a very similar experiment setup, using evolutionary algorithms to design a CA rule that could build and regenerate the French flag, starting from a seed cell.</p>
 <h3>Neural Networks and Self-Organisation</h3>
 <p>The close relation between Convolutional Neural Networks and Cellular Automata was already observed by a number of researchers <d-cite key="wulff1993learning, Gilpin2018CellularAA"></d-cite>. The connection is so strong it allows to build Neural CA models using components readily available in popular ML frameworks. Thus, using a different jargon, our Neural CA can also be named Recurrent Residual Convolutional Networks.</p>
 
