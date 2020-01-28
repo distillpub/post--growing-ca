@@ -76,22 +76,24 @@
     }
 
     #demoControls {
-      font-size: 0.9em;
     }
    
     @media (min-width: 768px) {
       #demoControls {
-        max-width: 200px;
       }
     }
 
     #status {
       color: rgba(0, 0, 0, 0.6);
       font-size: 12px;
+      margin: 2px;
       position: absolute;
     }
     figure img {
      width: inherit;
+    }
+    #playback {
+      vertical-align: middle;
     }
 
     #experimentSelector * {
@@ -101,6 +103,9 @@
     }
     #experimentSelector *:hover {
       background-color: lightyellow;
+    }
+    #play {
+      font-size: 300%;
     }
   </style>
 
@@ -113,25 +118,29 @@
         <a href="https://docs.google.com/document/d/11UnoVOWPncooSMQFqBigcLzP-dVyalmgrLa2pWFxhuM">
           version of this document</a>.</b>
     </p>
-    <div class="l-body grid" id="demo">
+    <div class="l-body" id="demo" style='max-width: 500px;'>
       <div>
         <span id='status'></span>
         <canvas id="c" class="demoCanvas">
         </canvas><br>
-        
       </div>
-      <div id="demoControls" class="side">
+      <div id="demoControls">
+        <div id='playback'>
+          <span id="play">▶️</span>
+          speed: <input type="range" min="0" max="360" step="10" value="0">
+          <button style="float:right;" id="resetButton">Reset</button>
+        </div>
         <b>Model type:</b> <span id='experimentSelector'>
             <span id="ex1">growing</span>
             <span id="ex2">+ persistent</span>
             <span id="ex3">+ regenerating</span>
         </span> <br>
-        Select target: <span id="emojiSelector"></span> <br>
+        <b>Pattern</b>: <span id="emojiSelector"></span> <br>
         <input type="checkbox" id="throttle"> Full throttle<br>
         <label for="angle">Rotation</label>
         <input type="range" id="angle" min="0" max="360" step="10" value="0"> <br>
         
-        <button id="resetButton">Reset</button>
+        
       </div>
       <figcaption>
         This demo invites the reader to interact with pattern-generating
