@@ -13,9 +13,9 @@
 
 <p>So - what is so special about differentiable update rules? They will allow us to use the powerful language of loss functions to express our wishes, and the extensive existing machinery around gradient-based numerical optimization to fulfill them. The art of stacking together differentiable functions, and optimizing their parameters to perform various tasks has a long history. In recent years it has flourished under various names, such as (Deep) Neural Networks, Deep Learning or Differentiable Programming.</p>
 <h2>Model</h2>
-<p><figure style="margin-left:auto; margin-right: auto; grid-column:page; width:100%; max-width:1200px;">
+<p><figure style="margin-left:auto; margin-right: auto; grid-column:page; width:100%; max-width:2000px;">
   <object data="figures/model.svg" type="image/svg+xml" style="width:100%"></object>
-  <figcaption style="max-width:300px;">
+  <figcaption style="">
   A single update step of the model.
   </figcaption>
 </figure></p>
@@ -29,7 +29,7 @@
 
 <p>Hidden channels don’t have a predefined meaning, and it’s up to the update rule to decide what to use them for. They can be interpreted as concentrations of some chemicals, electric potentials or some other signaling mechanism that are used by cells to orchestrate the growth. In terms of our biological analogy - all our cells share the same genome (update rule) and are only differentiated by the information encoded the chemical signalling they receive and emit and store internally (their state vectors).</p>
 
-<h3>Cellular Automaton rule      </h3>
+<h3>Cellular Automaton rule</h3>
 <p>Now it’s time to define the update rule. Our CA runs on a regular 2D grid of 16-dimensional vectors, essentially a 3D array of shape [height, width, 16]. We want to apply the same operation to each cell, and the result of this operation can only depend on the small (3x3) neighborhood of the cell. This is heavily reminiscent of the convolution operation, one of the cornerstones of signal processing and differential programming. Convolution is a linear operation, but it can be combined with other per-cell operations to produce a complex update rule, capable of learning the desired behaviour. Our cell update rule can be split into the following phases, applied in order:</p>
 
 <ul><li><strong>Perception.</strong> This step defines what each cell perceives of the environment surrounding it. We implement this via a 3x3 convolution with a fixed kernel. One may argue that defining this kernel is superfluous - after all we could simply have the cell learn the requisite perception kernel coefficients. Our choice of fixed operations are motivated by the fact that real life cells often rely only on chemical gradients to guide the organism development. Thus, we are using classical Sobel filters to estimate the partial derivatives of cell state channels in the $\vec{x}$ and $\vec{y}$ directions, forming a 2D gradient vector in each direction, for each state channel. We concatenate those gradients with the cells own states, forming a $16*2+16=48$ dimensional <i>perception vector</i>, or rather <i>percepted vector, </i>for each cell.</li></ul>
@@ -130,7 +130,7 @@
 
 <p>One strategy to solve this is letting the CA iterate for much a longer time and periodically applying the loss against the target, training the system by backpropagation through these longer time intervals. Intuitively we claim that with longer the time intervals and several applications of loss, the model is more likely to create an attractor for the target shape. However, longer time periods substantially increase the training time and more importantly, the memory requirements, given that the entire episode’s intermediate activations must be stored in memory for a backwards-pass to occur.</p>
 
-<p>Instead, we propose a “sample pool” based strategy to a similar effect. We define a pool of seed states to start the iterations from, initially filled with the single black pixel seed state. We then sample a batch from this pool which we use in our training step. To prevent the equivalent of “catastrophic forgetting” we replace one sample in this batch with the original, single-pixel seed state. After concluding the training step , we replace samples in the pool that were sampled for the batch with the output states from the training step over this batch. The animation below shows a random sample of the entries in the pool every 100 training steps.</p>
+<p>Instead, we propose a “sample pool” based strategy to a similar effect. We define a pool of seed states to start the iterations from, initially filled with the single black pixel seed state. We then sample a batch from this pool which we use in our training step. To prevent the equivalent of “catastrophic forgetting” we replace one sample in this batch with the original, single-pixel seed state. After concluding the training step , we replace samples in the pool that were sampled for the batch with the output states from the training step over this batch. The animation below shows a random sample of the entries in the pool every 20 training steps.</p>
 
 <figure>    <video loop autoplay playsinline muted>
       <source src="figures/pool.mp4" type="video/mp4">
@@ -217,7 +217,7 @@
 $</figure>
 <p>This simple modification of the perceptive field produces rotated versions of the pattern without retraining the model for any angle of choice!</p>
 <figure><img src="figures/rotation.png"></figure>
-<p>In a perfect world, not quantized by individual cells in a lattice, this would not be too surprising, as, after all, one would expect the perceived gradients in $\vec{x}$ and $\vec{y}$ to be invariant to the chosen angle. However, successfully rotating the pattern in a pixel based model suggests that it’s very robust to perturbations outside of those which it has experienced during training, as rotating such a pattern on a 2D grid involves a mapping that’s not necessarily bijective and in most cases will involve interpolating between pixels. </p>
+<p>In a perfect world, not quantized by individual cells in a lattice, this would not be too surprising, as, after all, one would expect the perceived gradients in $\vec{x}$ and $\vec{y}$ to be invariant to the chosen angle. However, successfully rotating the pattern in a pixel based model suggests that it’s very robust to perturbations outside of those which it has experienced during training, as rotating such a pattern on a 2D grid involves a mapping that’s not necessarily bijective and in most cases will involve interpolating between pixels. For instance, it can be observed that the model can easily learn to reproduce a target pattern consisting of a pixel-width straight black line, pointing in $\vec{x}$. Rotating the perception kernels by $2\pi/8$ produces the expected slanted black line at 45 degrees, with pixel perfect placement along the diagonal. Upon investigation, however, we can see that the gradient observed along the line’s axis is of an entirely different magnitude in the rotated case due to the imperfect nature of the sobel kernel as an estimate for the gradient. </p>
 
 <h2>WebGL Playground</h2>
 <p>Starting from our first experiments on Neural CA growth and regeneration, we wanted to challenge our models with new situations not seen during training, like removing large portions of the pattern, or seeding multiple instances side-by-side. To facilitate exploration and sharing of our models, we created a TensorFlow.js playground that allowed us to interact with trained models right in a browser. The code for exporting and loading CA models in TF.js format is available in the accompanying Colab notebook.</p>
@@ -236,7 +236,7 @@ $</figure>
 <h2>Related work</h2>
 <h3>CA and PDEs</h3>
 <p>There exists a giant body of literature that describes various flavours of cellular automata and PDE systems, and their applications to modelling physical, biological or even social systems. Albeit it would be impossible to present a just overview of this field in a few lines, we hereby describe some prominent examples that inspired this work. Alan Turing introduced his famous Turing patterns back in 1952 <d-cite key="turing1990chemical"></d-cite>, suggesting how reaction-diffusion systems can be a valid modeling for chemical behaviors during morphogenesis. A particularly inspiring reaction-diffusion model that stood the test of time is the Gray-Scott model <d-cite key="Pearson189"></d-cite>, showing an extreme variety of behaviors controlled by just a few variables.</p>
-<p>Since when von Neumann introduced CA <d-cite key="10.5555/1102024"></d-cite> as models for self-replication, CA have been captivating researchers’ minds, who observed extremely complex behaviours emerging from very simple rules. Likewise, the broader audience was seduced by CA’s life-like behaviours thanks to Conway’s Game of Life <d-cite key="10.2307/24927642"></d-cite>. Perhaps motivated in part by the proof that something as simple as the Rule 110 is Turing complete, Worfram‘s \textit{A New Kind of Science} asks for a paradigm shift, centered around the extensive usage of elementary computer programs such as CA as tools for understanding the world.</p>
+<p>Since when von Neumann introduced CA <d-cite key="10.5555/1102024"></d-cite> as models for self-replication, CA have been captivating researchers’ minds, who observed extremely complex behaviours emerging from very simple rules. Likewise, the broader audience was seduced by CA’s life-like behaviours thanks to Conway’s Game of Life <d-cite key="10.2307/24927642"></d-cite>. Perhaps motivated in part by the proof that something as simple as the Rule 110 is Turing complete, Wolfram's \textit{A New Kind of Science} asks for a paradigm shift, centered around the extensive usage of elementary computer programs such as CA as tools for understanding the world.</p>
 <p>More recently, several researchers generalized Conway’s Game of life to work on more continuous domains. We were particularly inspired by Rafler’s SmoothLife <d-cite key="rafler2011generalization"></d-cite> and Chan’s Lenia <d-cite key="Chan_2019, Reinke2019IntrinsicallyME"></d-cite>, the latter of which also discovers and classifies entire species of “lifeforms”.</p>
 
 <p>A number of researchers used evolutionary algorithms to find CA rules that reproduce predefined simple patterns <d-cite key="10.1007/978-3-642-19167-1_2, Nichele2018CANEATEC"></d-cite>. For example, J. Miller <d-cite key="Miller2004"></d-cite> proposed a very similar experiment setup, using evolutionary algorithms to design a CA rule that could build and regenerate the French flag, starting from a seed cell.</p>
@@ -254,6 +254,11 @@ $</figure>
 <p>Michael Levin, Bert Chan, Mark Sandler, Blaise, Andrew Jackson (proofreading), Damien</p>
 
 <h3>Author Contributions</h3>
+<p><strong>Research:</strong> Alex came up with the core idea of the article and provided advice throughout. Ettore prototyped the models and performed the first versions of the experiments. Alex simplified, further improved the models, and performed the final versions of the experiments, shown in the article.</p>
+
+<p><strong>Demos:</strong> Alex created both the WebGL and the tf.js demo. Ettore contributed to the tf.js demo.</p>
+
+<p><strong>Writing & Diagrams:</strong> Alex outlined the structure of the article, and contributed to the content throughout. Ettore contributed to the content throughout. Eyvind drew all the diagrams, contributed to the content throughout, and wrote all of the pseudocode.</p>
 
 <!-- References -->
 <d-footnote-list></d-footnote-list>
