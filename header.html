@@ -104,10 +104,17 @@
     #experimentSelector *:hover {
       background-color: lightyellow;
     }
-    #play {
-      font-size: 300%;
+    .icon {
+      width: 48px; height: 48px;
+      touch-action: none;
+      user-select: none;
     }
+
   </style>
+  <svg xmlns="http://www.w3.org/2000/svg">
+    <symbol id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/><path d="M0 0h24v24H0z" fill="none"/></symbol>
+    <symbol id="pauseIcon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/><path d="M0 0h24v24H0z" fill="none"/></symbol>
+  </svg>
 
   <d-title>
     <h1>Growing Neural Cellular Automata</h1>
@@ -126,7 +133,11 @@
       </div>
       <div id="demoControls">
         <div id='playback'>
-          <span id="play">▶️</span>
+          <span id="playPause">
+            <svg class="icon" id="play"><use xlink:href="#playIcon" /></svg>
+            <svg class="icon" id="pause"><use xlink:href="#pauseIcon" /></svg>
+          </span>
+
           speed: <input type="range" min="0" max="360" step="10" value="0">
           <button style="float:right;" id="resetButton">Reset</button>
         </div>

@@ -12,17 +12,34 @@ export function createDemo(divId) {
     const root = document.getElementById(divId);
     const $ = q=>root.querySelector(q);
     const $$ = q=>root.querySelectorAll(q);
-
-
-    const canvas = $('#c');
-    const gl = canvas.getContext("webgl");
-    canvas.width = 96*6;
-    canvas.height = 96*6;
   
     let demo;
     const modelDir = 'webgl_models8/';
     let target = '🦎';
     let experiment = 'ex3';
+    let paused = false;
+
+    const canvas = $('#c');
+    const gl = canvas.getContext("webgl");
+    canvas.width = 96*6;
+    canvas.height = 96*6;
+
+    function updateUI() {
+      $$('#emojiSelector *').forEach(e=>{
+        e.style.backgroundColor = e.id==target?'Gold':'';
+      });
+      $$('#experimentSelector *').forEach(e=>{
+        e.style.backgroundColor = e.id<=experiment?'Gold':'';
+      });
+      $('#play').style.display = paused? "block" : "none";
+      $('#pause').style.display = !paused? "block" : "none";
+    }
+
+    $('#playPause').onclick = ()=>{
+      paused = !paused;
+      updateUI();
+    }
+
 
     async function updateModel() {
       const r = await fetch(`${modelDir}/${experiment}_${target}.json`);
@@ -36,12 +53,7 @@ export function createDemo(divId) {
         demo.setWeights(model);
         demo.reset();
       }
-      $$('#emojiSelector *').forEach(e=>{
-        e.style.backgroundColor = e.id==target?'Gold':'';
-      });
-      $$('#experimentSelector *').forEach(e=>{
-        e.style.backgroundColor = e.id<=experiment?'Gold':'';
-      });
+      updateUI();
 
     }
     updateModel();
@@ -130,16 +142,19 @@ export function createDemo(divId) {
         return;
       }
   
-      let stepN = 1;
-      if ($('#throttle').checked && lastDrawTime) {
-        if (time - lastDrawTime < 18) {
-          stepsPerFrame += 1;
-        } else {
-          stepsPerFrame = Math.max(1, stepsPerFrame-1);
+      let stepN = 0;
+      if (!paused) {
+        stepN = 1;
+        if ($('#throttle').checked && lastDrawTime) {
+          if (time - lastDrawTime < 18) {
+            stepsPerFrame += 1;
+          } else {
+            stepsPerFrame = Math.max(1, stepsPerFrame-1);
+          }
+          stepN = stepsPerFrame;
         }
-        stepN = stepsPerFrame;
+        lastDrawTime = time;
       }
-      lastDrawTime = time;
       
       demo.setAngle($('#angle').value);
       for (let i=0; i<stepN; ++i) {

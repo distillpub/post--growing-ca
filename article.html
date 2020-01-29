@@ -25,11 +25,11 @@
 
 <p>The alpha channel ($\alpha$) has a special meaning: it demarcates living cells, those belonging to the pattern being grown. In particular, cells having $\alpha > 0.1$ and their neighbors are considered “living”. Other cells are “dead” or empty and have their state vector values explicitly set to 0.0 at each time step. Thus cells with $\alpha > 0.1$ can be thought of as “mature”, while their neighbors with $\alpha \leq 0.1$ are “growing”, and can become mature if their alpha passes the 0.1 threshold.</p>
 
-<p></p>
+<figure><img src="figures/amask.svg" /></figure>
 
 <p>Hidden channels don’t have a predefined meaning, and it’s up to the update rule to decide what to use them for. They can be interpreted as concentrations of some chemicals, electric potentials or some other signaling mechanism that are used by cells to orchestrate the growth. In terms of our biological analogy - all our cells share the same genome (update rule) and are only differentiated by the information encoded the chemical signalling they receive and emit and store internally (their state vectors).</p>
 
-<h3>Cellular Automaton rule</h3>
+<h3>Cellular Automaton rule      </h3>
 <p>Now it’s time to define the update rule. Our CA runs on a regular 2D grid of 16-dimensional vectors, essentially a 3D array of shape [height, width, 16]. We want to apply the same operation to each cell, and the result of this operation can only depend on the small (3x3) neighborhood of the cell. This is heavily reminiscent of the convolution operation, one of the cornerstones of signal processing and differential programming. Convolution is a linear operation, but it can be combined with other per-cell operations to produce a complex update rule, capable of learning the desired behaviour. Our cell update rule can be split into the following phases, applied in order:</p>
 
 <ul><li><strong>Perception.</strong> This step defines what each cell perceives of the environment surrounding it. We implement this via a 3x3 convolution with a fixed kernel. One may argue that defining this kernel is superfluous - after all we could simply have the cell learn the requisite perception kernel coefficients. Our choice of fixed operations are motivated by the fact that real life cells often rely only on chemical gradients to guide the organism development. Thus, we are using classical Sobel filters to estimate the partial derivatives of cell state channels in the $\vec{x}$ and $\vec{y}$ directions, forming a 2D gradient vector in each direction, for each state channel. We concatenate those gradients with the cells own states, forming a $16*2+16=48$ dimensional <i>perception vector</i>, or rather <i>percepted vector, </i>for each cell.</li></ul>
@@ -234,13 +234,12 @@ $</figure>
 <ul><li><strong>Rotation</strong> – controls the rotation applied to the perceived activation gradients, as described in the experiment section 4.</li></ul>
 <ul><li><strong>Speed</strong> – simulation speed, from “paused” to “Full throttle”. “Full throttle” mode tries to load the GPU with as many iterations per second as possible. Use it cautiously, as it can result in reduction of system performance.</li></ul>
 <h2>Related work</h2>
-<h3>Artificial Self-Organising systems</h3>
 <h3>CA and PDEs</h3>
 <p>There exists a giant body of literature that describes various flavours of cellular automata and PDE systems, and their applications to modelling physical, biological or even social systems. Albeit it would be impossible to present a just overview of this field in a few lines, we hereby describe some prominent examples that inspired this work. Alan Turing introduced his famous Turing patterns back in 1952 <d-cite key="turing1990chemical"></d-cite>, suggesting how reaction-diffusion systems can be a valid modeling for chemical behaviors during morphogenesis. A particularly inspiring reaction-diffusion model that stood the test of time is the Gray-Scott model <d-cite key="Pearson189"></d-cite>, showing an extreme variety of behaviors controlled by just a few variables.</p>
 <p>Since when von Neumann introduced CA <d-cite key="10.5555/1102024"></d-cite> as models for self-replication, CA have been captivating researchers’ minds, who observed extremely complex behaviours emerging from very simple rules. Likewise, the broader audience was seduced by CA’s life-like behaviours thanks to Conway’s Game of Life <d-cite key="10.2307/24927642"></d-cite>. Perhaps motivated in part by the proof that something as simple as the Rule 110 is Turing complete, Worfram‘s \textit{A New Kind of Science} asks for a paradigm shift, centered around the extensive usage of elementary computer programs such as CA as tools for understanding the world.</p>
 <p>More recently, several researchers generalized Conway’s Game of life to work on more continuous domains. We were particularly inspired by Rafler’s SmoothLife <d-cite key="rafler2011generalization"></d-cite> and Chan’s Lenia <d-cite key="Chan_2019, Reinke2019IntrinsicallyME"></d-cite>, the latter of which also discovers and classifies entire species of “lifeforms”.</p>
 
-<p>A number of researchers used evolutionary algorithms to find CA rules that reproduce predefined simple patterns (<d-cite key="10.1007/978-3-642-19167-1_2"></d-cite>, <d-cite key="Nichele2018CANEATEC"></d-cite>). For example, J. Miller <d-cite key="Miller2004"></d-cite> proposed a very similar experiment setup, using evolutionary algorithms to design a CA rule that could build and regenerate the French flag, starting from a seed cell.</p>
+<p>A number of researchers used evolutionary algorithms to find CA rules that reproduce predefined simple patterns <d-cite key="10.1007/978-3-642-19167-1_2, Nichele2018CANEATEC"></d-cite>. For example, J. Miller <d-cite key="Miller2004"></d-cite> proposed a very similar experiment setup, using evolutionary algorithms to design a CA rule that could build and regenerate the French flag, starting from a seed cell.</p>
 <h3>Neural Networks and Self-Organisation</h3>
 <p>The close relation between Convolutional Neural Networks and Cellular Automata was already observed by a number of researchers <d-cite key="wulff1993learning, Gilpin2018CellularAA"></d-cite>. The connection is so strong it allows to build Neural CA models using components readily available in popular ML frameworks. Thus, using a different jargon, our Neural CA can also be named Recurrent Residual Convolutional Networks.</p>
 
@@ -252,7 +251,7 @@ $</figure>
 </d-article>
 <d-appendix>
 <h3>Acknowledgments</h3>
-<p>Michael Levin, Bert Chan, Mark Sandler, Blaise, Andrew Jackson (proofreading), Eyvind, Damien</p>
+<p>Michael Levin, Bert Chan, Mark Sandler, Blaise, Andrew Jackson (proofreading), Damien</p>
 
 <h3>Author Contributions</h3>
 
