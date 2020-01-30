@@ -89,11 +89,8 @@
       margin: 2px;
       position: absolute;
     }
-    figure img {
-     width: inherit;
-    }
     #playback {
-      vertical-align: middle;
+      display: flex;
     }
 
     #experimentSelector * {
@@ -105,9 +102,12 @@
       background-color: lightyellow;
     }
     .icon {
-      width: 48px; height: 48px;
+      width: 40px; height: 40px;
       touch-action: none;
       user-select: none;
+    }
+    .icon:hover {
+      background:blanchedalmond;
     }
 
     .colab-root {
@@ -143,9 +143,10 @@
       border-color: rgba(0, 0, 0, 0.2);
     }
   </style>
-  <svg xmlns="http://www.w3.org/2000/svg">
+  <svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
     <symbol id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/><path d="M0 0h24v24H0z" fill="none"/></symbol>
     <symbol id="pauseIcon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/><path d="M0 0h24v24H0z" fill="none"/></symbol>
+    <symbol id="resetIcon"  viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></symbol>
   </svg>
 
   <d-title>
@@ -166,12 +167,15 @@
       <div id="demoControls">
         <div id='playback'>
           <span id="playPause">
-            <svg class="icon" id="play"><use xlink:href="#playIcon" /></svg>
-            <svg class="icon" id="pause"><use xlink:href="#pauseIcon" /></svg>
+            <svg class="icon" id="play"><use xlink:href="#playIcon"/></svg>
+            <svg class="icon" id="pause" style="display:none"><use xlink:href="#pauseIcon"/></svg>
           </span>
 
-          speed: <input type="range" min="0" max="360" step="10" value="0">
-          <button style="float:right;" id="resetButton">Reset</button>
+          <div style="flex-grow: 2; text-align: center; line-height: 0.8em;">
+            <input style="width: 90%" id="speed" type="range" min="-3" max="3" step="1" value="0"><br>
+            <span id='speedLabel'>speed</span>
+          </div>
+          <svg class="icon" id="resetButton"><use xlink:href="#resetIcon"/></svg>
         </div>
         <b>Model type:</b> <span id='experimentSelector'>
             <span id="ex1">growing</span>
@@ -179,7 +183,6 @@
             <span id="ex3">+ regenerating</span>
         </span> <br>
         <b>Pattern</b>: <span id="emojiSelector"></span> <br>
-        <input type="checkbox" id="throttle"> Full throttle<br>
         <label for="angle">Rotation</label>
         <input type="range" id="angle" min="0" max="360" step="10" value="0"> <br>
         
