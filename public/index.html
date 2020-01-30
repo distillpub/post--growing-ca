@@ -56,66 +56,16 @@
   </d-front-matter>
 
   <style>
-
     figure {
       text-align: center
     }
     figure img {
       max-width: 100%;
     }
-
     video {
       max-width: 100%;
     }
-    .demoCanvas {
-      border: 1px solid lightgrey;
-      image-rendering: pixelated;
-      touch-action: none;
-      width: 100%;
-      max-width: 500px;
-    }
-
-    #demoControls {
-    }
-   
-    @media (min-width: 768px) {
-      #demoControls {
-      }
-    }
-
-    #status {
-      color: rgba(0, 0, 0, 0.6);
-      font-size: 12px;
-      margin: 2px;
-      position: absolute;
-    }
-    #playback {
-      display: flex;
-    }
-
-    #experimentSelector * {
-      cursor: pointer;
-      border: 1px solid lightgrey;
-      white-space: nowrap;
-    }
-    #experimentSelector *:hover {
-      background-color: lightyellow;
-    }
-    .icon {
-      width: 40px; height: 40px;
-      touch-action: none;
-      user-select: none;
-    }
-    .icon:hover {
-      background:blanchedalmond;
-    }
-
   </style>
-  <svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
-    <symbol id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/><path d="M0 0h24v24H0z" fill="none"/></symbol>
-    <symbol id="pauseIcon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/><path d="M0 0h24v24H0z" fill="none"/></symbol>
-    <symbol id="resetIcon"  viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></symbol>
-  </svg>
 
   <d-title>
     <h1>Growing Neural Cellular Automata</h1>
@@ -126,47 +76,132 @@
         <a href="https://docs.google.com/document/d/11UnoVOWPncooSMQFqBigcLzP-dVyalmgrLa2pWFxhuM">
           version of this document</a>.</b>
     </p>
-    <div class="l-body" id="demo" style='max-width: 500px;'>
-      <div>
-        <span id='status'></span>
-        <canvas id="c" class="demoCanvas">
-        </canvas><br>
-      </div>
-      <div id="demoControls">
-        <div id='playback'>
-          <span id="playPause">
-            <svg class="icon" id="play"><use xlink:href="#playIcon"/></svg>
-            <svg class="icon" id="pause" style="display:none"><use xlink:href="#pauseIcon"/></svg>
-          </span>
+<svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/><path d="M0 0h24v24H0z" fill="none"/></symbol>
+    <symbol id="pauseIcon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/><path d="M0 0h24v24H0z" fill="none"/></symbol>
+    <symbol id="resetIcon"  viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></symbol>
+</svg>
 
-          <div style="flex-grow: 2; text-align: center; line-height: 0.8em;">
-            <input style="width: 90%" id="speed" type="range" min="-3" max="3" step="1" value="0"><br>
-            <span id='speedLabel'>speed</span>
-          </div>
-          <svg class="icon" id="resetButton"><use xlink:href="#resetIcon"/></svg>
-        </div>
-        <b>Model type:</b> <span id='experimentSelector'>
-            <span id="ex1">growing</span>
-            <span id="ex2">+ persistent</span>
-            <span id="ex3">+ regenerating</span>
-        </span> <br>
-        <b>Pattern</b>: <span id="emojiSelector"></span> <br>
-        <label for="angle">Rotation</label>
-        <input type="range" id="angle" min="0" max="360" step="10" value="0"> <br>
-        
-        
-      </div>
-      <figcaption>
-        This demo invites the reader to interact with pattern-generating
-        Neural Cellular Automata models described in this article.
-        Click or tap the image to erase the part of the pattern and see it regenerate.
-        Double clicking places a new seed cell on the grid.
-      </figcaption>
+<style>
+#demo {
+    font-size: 14px;
+    user-select: none;
+    grid-template-columns: auto;
+    grid-template-rows: auto auto auto;
+    grid-auto-flow: column;
+    row-gap: 10px;
+}
+
+@media (min-width: 768px) {
+  #demo {
+    grid-template-columns: 1fr 280px;
+    grid-template-rows: auto auto;
+  }
+}
+
+#demo-canvas {
+    border: 1px solid lightgrey;
+    image-rendering: pixelated;
+    touch-action: none;
+    width: 100%;
+}
+#demo-controls {
+    line-height: 1em;
+    display: grid;
+    grid-template-columns: 120px auto;
+    grid-template-rows: 100px 60px auto;
+    row-gap: 1em;
+}
+#pattern-selector {
+    grid-column: 1/3;
+    display: grid;
+    grid-template-columns: repeat(5, auto);
+    justify-items: center;
+}
+#pattern-selector * {
+    width: 40px;
+    height: 40px;
+    background-image: url('images/emoji.png');
+    cursor: pointer;
+}
+.icon {
+    width: 30px; height: 30px;
+    background: steelblue;
+    fill: white;
+    border-radius: 20px;
+    padding: 5px;
+    margin: 2px;
+    cursor: pointer;
+}
+#model-selector {
+    line-height: 1.4em;
+}
+#demo-tip{
+    color: rgba(0, 0, 0, 0.6);
+    display: grid;
+    grid-template-columns: 40px auto;
+    align-items: center;
+    column-gap: 10px;
+    line-height: 1.2em;
+}
+#pointer {
+    width: 40px;
+}
+input[type=range] {
+    width: 90%;
+}
+#status {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.6);
+}
+</style>
+
+<div class="l-body-outset grid" id="demo">
+
+    <canvas id="demo-canvas" width=768 height=768></canvas>
+
+    <div id="demo-tip">
+            <img id="pointer" src="images/pointer.svg">
+            <div>
+                Click or tap the image to erase the part of the pattern and see it regenerate.
+                Double clicking places a new seed cell on the grid.                
+            </div>
     </div>
-    <script type="module">
-            import { createDemo } from './demo.js'
-            createDemo('demo');
-    </script>
+
+
+    <div id="demo-controls">
+        <div id="pattern-selector">
+        </div>
+        <div>
+            <span id="play-pause">
+                <svg class="icon" id="play"><use xlink:href="#playIcon"/></svg>
+                <svg class="icon" id="pause" style='display: none;'><use xlink:href="#pauseIcon"/></svg>
+            </span>
+            <svg class="icon" id="reset"><use xlink:href="#resetIcon"/></svg>
+        </div>
+        <div>
+            Speed: <span id='speedLabel'></span><br>
+            <input type="range" id="speed" min="-3" max="3" step="1" value="0"><br>
+            <span id="status"></span>
+        </div>
+        <div id="model-selector">
+            Model type:<br>
+            <input type="radio" name="model" id="ex1"> <label for="ex1">Growing</label><br>
+            <input type="radio" name="model" id="ex2"> <label for="ex2">Persistent</label><br>
+            <input type="radio" name="model" id="ex3"> <label for="ex3">Regenerating</label><br>        
+        </div>
+        <div>
+            Rotation <span id="rotationLabel"></span><br>
+            <input type="range" id="rotation" min="0" max="360" step="1" value="0"><br>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { createDemo } from './demo.js'
+    createDemo('demo');
+</script>
+
 </d-title>
 
 <d-article>

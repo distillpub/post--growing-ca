@@ -13,95 +13,130 @@ export function createDemo(divId) {
     const $ = q=>root.querySelector(q);
     const $$ = q=>root.querySelectorAll(q);
   
+    const W=96, H=96;
     let demo;
     const modelDir = 'webgl_models8/';
     let target = '🦎';
     let experiment = 'ex3';
     let paused = false;
 
-    const canvas = $('#c');
+    const canvas = $('#demo-canvas');
     const gl = canvas.getContext("webgl");
-    canvas.width = 96*6;
-    canvas.height = 96*6;
+    canvas.width = W*6;
+    canvas.height = H*6;
 
     function updateUI() {
-      $$('#emojiSelector *').forEach(e=>{
-        e.style.backgroundColor = e.id==target?'Gold':'';
+      $$('#pattern-selector *').forEach(e=>{
+        e.style.opacity = e.id==target ? 1.0 : 0.2;
       });
-      $$('#experimentSelector *').forEach(e=>{
-        e.style.backgroundColor = e.id<=experiment?'Gold':'';
+      $$('#model-selector input').forEach(e=>{
+        e.checked = e.id<=experiment;
       });
       $('#play').style.display = paused? "inline" : "none";
       $('#pause').style.display = !paused? "inline" : "none";
       const speed = parseInt($('#speed').value);
-      $('#speedLabel').innerHTML = 'speed: '+
-          ['1/60 x', '1/10 x', '1/2 x', '1x', '2x', '4x', '<b>full throttle !!!</b>'][speed+3];
-
+      $('#speedLabel').innerHTML = ['1/60 x', '1/10 x', '1/2 x', '1x', '2x', '4x', '<b>max</b>'][speed+3];
+      $("#rotationLabel").innerText = $('#rotation').value + '°';
     }
 
     function initUI() {
-      $('#playPause').onclick = ()=>{
+      let spriteX = 0;
+      for (let c of '🦎😀💥👁🐠🦋🐞🕸🥨🎄') {
+        const div = document.createElement('div')
+        div.id = c;
+        div.style.backgroundPositionX = spriteX + 'px';
+        div.onclick = ()=>{
+          target = c;
+          updateModel();
+        }
+        spriteX -= 40;
+        $('#pattern-selector').appendChild(div);
+      }
+      $('#reset').onclick = demo.reset;
+      $('#play-pause').onclick = ()=>{
         paused = !paused;
         updateUI();
       };
-      $('#resetButton').onclick = demo.reset;
+      $$('#model-selector input').forEach(sel=>{
+        sel.onchange = ()=>{
+          experiment = sel.id;
+          updateModel();
+        }
+      });
       $('#speed').onchange = updateUI;
       $('#speed').oninput = updateUI;
-      $('#experimentSelector').onclick = e=>{
-        experiment = e.target.id;
-        updateModel();
-      };
-      const modelSel = $('#emojiSelector');
-      for (let c of '😀💥👁🦎🐠🦋🐞🕸🥨🎄') {
-        modelSel.innerHTML += `<span id="${c}">${c}</span>`;
-      }
-      modelSel.innerHTML += `<span id="planarian">planarian</span>`;
-      modelSel.onclick = async e => {
-        target = e.target.innerText;
-        if (target == 'planarian') {
-          experiment = 'ex3';
-        }
-        updateModel();
-      };
+      $('#rotation').onchange = updateUI;
+      $('#rotation').oninput = updateUI;
 
+      function canvasToGrid(x, y) {
+        const [w, h] = demo.gridSize;
+        const gridX = Math.floor(x / canvas.clientWidth * w);
+        const gridY = Math.floor(y / canvas.clientHeight * h);
+        return [gridX, gridY];
+      }
+      function getMousePos(e) {
+        return canvasToGrid(e.offsetX, e.offsetY);
+      }
+      function getTouchPos(touch) {
+        const rect = canvas.getBoundingClientRect();
+        return canvasToGrid(touch.clientX-rect.left, touch.clientY - rect.top);
+      }
+  
       let doubleClick = false;
+      function click(pos) {
+        const [x, y] = pos;
+        if (doubleClick) {
+          demo.paint(x, y, 1, 'seed');
+          doubleClick = false;
+        } else {
+          doubleClick = true;
+          setTimeout(()=>{
+            doubleClick = false;
+          }, 300);
+          demo.paint(x, y, 8, 'clear');
+        }
+      }
+      function move(pos) {
+        const [x, y] = pos;
+        demo.paint(x, y, 8, 'clear');
+      }
+      
 
       canvas.onmousedown = e => {
         e.preventDefault();
-        const [x, y] = getMousePos(e);
         if (e.buttons == 1) {
-          if (doubleClick) {
-            demo.paint(x, y, 1, 'seed');
-            doubleClick = false;
-          } else {
-            doubleClick = true;
-            setTimeout(()=>{
-              doubleClick = false;
-            }, 300);
-            demo.paint(x, y, 8, 'clear');
-          }
+          click(getMousePos(e));
         }
       }
       canvas.onmousemove = e => {
         e.preventDefault();
         if (e.buttons == 1) {
-          const [x, y] = getMousePos(e);
-          demo.paint(x, y, 8, 'clear');
+          move(getMousePos(e));
         }
       }
-    
+      canvas.addEventListener("touchstart", e=>{
+        e.preventDefault();
+        click(getTouchPos(e.changedTouches[0]));
+      });
       canvas.addEventListener("touchmove", e=>{
-        const ox = e.target.offsetLeft;
-        const oy = e.target.offsetTop;
+        e.preventDefault();
         for (const t of e.touches) {
-          const mx = t.pageX - ox;
-          const my = t.pageY - oy;
-          const [w, h] = demo.gridSize;
-          const x = Math.floor(mx / canvas.clientWidth * w);
-          const y = Math.floor(my / canvas.clientHeight * h);
-          demo.paint(x, y, 8, 'clear');
+          move(getTouchPos(t));
         }
-      }, false);
+      });
+    
+      // canvas.addEventListener("touchmove", e=>{
+      //   const ox = e.target.offsetLeft;
+      //   const oy = e.target.offsetTop;
+      //   for (const t of e.touches) {
+      //     const mx = t.pageX - ox;
+      //     const my = t.pageY - oy;
+      //     const [w, h] = demo.gridSize;
+      //     const x = Math.floor(mx / canvas.clientWidth * w);
+      //     const y = Math.floor(my / canvas.clientHeight * h);
+      //     demo.paint(x, y, 8, 'clear');
+      //   }
+      // }, false);
       updateUI();
     }
 
@@ -109,7 +144,7 @@ export function createDemo(divId) {
       const r = await fetch(`${modelDir}/${experiment}_${target}.json`);
       const model = await r.json();
       if (!demo) {
-        demo = createCA(gl, model);
+        demo = createCA(gl, model, [W, H]);
         initUI();        
         requestAnimationFrame(render);
       } else {
@@ -120,20 +155,12 @@ export function createDemo(divId) {
     }
     updateModel();
   
-  
-    function getMousePos(e) {
-      const [w, h] = demo.gridSize;
-      const x = Math.floor(e.offsetX / canvas.clientWidth * w);
-      const y = Math.floor(e.offsetY / canvas.clientHeight * h);
-      return [x, y];
-    }
-  
     let lastDrawTime = 0;
     let stepsPerFrame = 1;
     let frameCount = 0;
   
     function render(time) {
-      if  (!isInViewport(canvas)) {
+      if  (!isInViewport(root)) {
         requestAnimationFrame(render);
         return;
       }
@@ -155,7 +182,7 @@ export function createDemo(divId) {
       }
       lastDrawTime = time;
 
-      demo.setAngle($('#angle').value);
+      demo.setAngle($('#rotation').value);
       for (let i=0; i<stepsPerFrame; ++i) {
         demo.step();
       }
@@ -163,9 +190,8 @@ export function createDemo(divId) {
       demo.draw();
       
       $("#status").innerText = `Step ${demo.getStepCount()}`;
-      const ips = demo.fps();
-      if (ips)
-        $("#status").innerText += ` (${ips} step/sec)`;
+      if (demo.fps())
+        $("#status").innerText += ` (${demo.fps()} step/sec)`;
       requestAnimationFrame(render);
     }
 }

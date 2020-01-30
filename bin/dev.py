@@ -1,7 +1,5 @@
-'''Advanced web-development server
+'''Advanced web-development server'''
 
-Runs ./bin/make.sh whenever index.html is fetched.
-'''
 from __future__ import print_function
 
 import os, glob
