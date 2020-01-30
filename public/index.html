@@ -57,7 +57,9 @@
 
   <style>
     figure {
-      text-align: center
+      text-align: center;
+      margin-bottom: 0.5em;
+      margin-top: 0.5em;      
     }
     figure img {
       max-width: 100%;
@@ -77,9 +79,9 @@
           version of this document</a>.</b>
     </p>
 <svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
-    <symbol id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/><path d="M0 0h24v24H0z" fill="none"/></symbol>
-    <symbol id="pauseIcon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/><path d="M0 0h24v24H0z" fill="none"/></symbol>
-    <symbol id="resetIcon"  viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></symbol>
+    <symbol id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path><path d="M0 0h24v24H0z" fill="none"></path></symbol>
+    <symbol id="pauseIcon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path><path d="M0 0h24v24H0z" fill="none"></path></symbol>
+    <symbol id="resetIcon" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"></path><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"></path></symbol>
 </svg>
 
 <style>
@@ -158,7 +160,7 @@ input[type=range] {
 
 <div class="l-body-outset grid" id="demo">
 
-    <canvas id="demo-canvas" width=768 height=768></canvas>
+    <canvas id="demo-canvas" width="768" height="768"></canvas>
 
     <div id="demo-tip">
             <img id="pointer" src="images/pointer.svg">
@@ -174,13 +176,13 @@ input[type=range] {
         </div>
         <div>
             <span id="play-pause">
-                <svg class="icon" id="play"><use xlink:href="#playIcon"/></svg>
-                <svg class="icon" id="pause" style='display: none;'><use xlink:href="#pauseIcon"/></svg>
+                <svg class="icon" id="play"><use xlink:href="#playIcon"></use></svg>
+                <svg class="icon" id="pause" style="display: none;"><use xlink:href="#pauseIcon"></use></svg>
             </span>
-            <svg class="icon" id="reset"><use xlink:href="#resetIcon"/></svg>
+            <svg class="icon" id="reset"><use xlink:href="#resetIcon"></use></svg>
         </div>
         <div>
-            Speed: <span id='speedLabel'></span><br>
+            Speed: <span id="speedLabel"></span><br>
             <input type="range" id="speed" min="-3" max="3" step="1" value="0"><br>
             <span id="status"></span>
         </div>

@@ -124,19 +124,6 @@ export function createDemo(divId) {
           move(getTouchPos(t));
         }
       });
-    
-      // canvas.addEventListener("touchmove", e=>{
-      //   const ox = e.target.offsetLeft;
-      //   const oy = e.target.offsetTop;
-      //   for (const t of e.touches) {
-      //     const mx = t.pageX - ox;
-      //     const my = t.pageY - oy;
-      //     const [w, h] = demo.gridSize;
-      //     const x = Math.floor(mx / canvas.clientWidth * w);
-      //     const y = Math.floor(my / canvas.clientHeight * h);
-      //     demo.paint(x, y, 8, 'clear');
-      //   }
-      // }, false);
       updateUI();
     }
 
