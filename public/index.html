@@ -245,7 +245,8 @@ input[type=range] {
 
 <p>The alpha channel ($\alpha$) has a special meaning: it demarcates living cells, those belonging to the pattern being grown. In particular, cells having $\alpha > 0.1$ and their neighbors are considered “living”. Other cells are “dead” or empty and have their state vector values explicitly set to 0.0 at each time step. Thus cells with $\alpha > 0.1$ can be thought of as “mature”, while their neighbors with $\alpha \leq 0.1$ are “growing”, and can become mature if their alpha passes the 0.1 threshold.</p>
 
-<figure><img src="figures/amask.svg" /></figure>
+<figure>  <img src="figures/amask.svg" />  
+<figcaption> $\vec{state} \rightarrow 0.00$ when no neighbour with $\alpha > 0.10$ </figcaption></figure>
 
 <p>Hidden channels don’t have a predefined meaning, and it’s up to the update rule to decide what to use them for. They can be interpreted as concentrations of some chemicals, electric potentials or some other signaling mechanism that are used by cells to orchestrate the growth. In terms of our biological analogy - all our cells share the same genome (update rule) and are only differentiated by the information encoded the chemical signalling they receive and emit and store internally (their state vectors).</p>
 
@@ -337,10 +338,15 @@ input[type=range] {
 <p>Once the optimisation converges, we can run simulations to see how our learned CA grows the butterfly, starting from the seed cell. Let’s see what happens when we run it for longer than the number of steps used during training. The animation below shows the behaviour of a few different models, trained to generate different emoji patterns.</p>
 
 
-<figure>    <video loop autoplay playsinline muted>
+<p><figure>
+    <video loop autoplay playsinline muted>
       <source src="figures/unstable.mp4" type="video/mp4">
       Your browser does not support the video tag.
-    </video></figure>
+    </video>
+  <figcaption>
+  Many of the patterns exhibit instability for longer time periods. <br><br> <a href="https://colab.research.google.com/drive/1oqVn8ReE7vp77nQLSWAY3v3O_0y-n87Q#scrollTo=4O4tzfe-GRJ7" class="colab-root">Reproduce in a <span class="colab-span">Notebook</span></a>
+  </figcaption>
+</figure></p>
 
 <p>We can see that different training runs can lead to models with drastically different long term behaviours. Some tend to die out, some don’t seem to know how to stop growing, but some happen to be almost stable! How can we steer the training towards producing persistent patterns all the time?</p>
 <h2>Experiment 2: What persists, exists</h2>
@@ -352,10 +358,15 @@ input[type=range] {
 
 <p>Instead, we propose a “sample pool” based strategy to a similar effect. We define a pool of seed states to start the iterations from, initially filled with the single black pixel seed state. We then sample a batch from this pool which we use in our training step. To prevent the equivalent of “catastrophic forgetting” we replace one sample in this batch with the original, single-pixel seed state. After concluding the training step , we replace samples in the pool that were sampled for the batch with the output states from the training step over this batch. The animation below shows a random sample of the entries in the pool every 20 training steps.</p>
 
-<figure>    <video loop autoplay playsinline muted>
+<p><figure>
+     <video loop autoplay playsinline muted>
       <source src="figures/pool.mp4" type="video/mp4">
       Your browser does not support the video tag.
-    </video></figure>
+    </video>
+  <figcaption>
+  A random sample of the patterns in the pool during training, sampled every 20 training steps. <br><br> <a href="https://colab.research.google.com/drive/1oqVn8ReE7vp77nQLSWAY3v3O_0y-n87Q#scrollTo=B4JAbAJf6Alw" class="colab-root">Reproduce in a <span class="colab-span">Notebook</span></a>
+  </figcaption>
+</figure></p>
 
 <p>Early on in the training process, the random dynamics in the system allow the model to end up in various incomplete and incorrect states. As these states are sampled from the pool, we refine the dynamics to be able to recover from such states. Finally, as the model becomes more robust at going from a seed state to the target state, the samples in the pool reflect this and are more likely to be very close to the target pattern, allowing the training to refine these almost completed patterns further. </p>
 
@@ -383,42 +394,59 @@ input[type=range] {
 
 <p>Here is what a typical training progress of CA rule looks like. It learns to stabilize the pattern in parallel while refining its features.</p>
 
-<figure>    <video loop autoplay playsinline muted>
+<p><figure>
+    <video loop autoplay playsinline muted>
       <source src="figures/train_steps_damage_0.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
-</figure>
-<p>CA behaviour at training steps 100, 500, 1000, 4000.</p>
+  <figcaption>
+  CA behaviour at training steps 100, 500, 1000, 4000. <br><br> <a href="https://colab.research.google.com/drive/1oqVn8ReE7vp77nQLSWAY3v3O_0y-n87Q#scrollTo=nqvkfl9W4ODI" class="colab-root">Reproduce in a <span class="colab-span">Notebook</span></a>
+  </figcaption>
+</figure></p>
+
 <h2>Experiment 3: Learning to regenerate</h2>
 <p>In addition to being able to grow their own bodies, living creatures are great at maintaining them. Not only worn out skin gets replaced with new, but very heavy damages to complex vital organs can be regenerated by some creatures. Is there a chance that some of the models we trained above have regenerative capabilities?</p>
 
-<figure>    <video loop autoplay playsinline muted>
+<p><figure>
+    <video loop autoplay playsinline muted>
       <source src="figures/regen1.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
-</figure>
+  <figcaption>
+  Patterns exhibit some regenerative properties upon being damaged, but not full re-growth. <br><br> <a href="https://colab.research.google.com/drive/1oqVn8ReE7vp77nQLSWAY3v3O_0y-n87Q#scrollTo=S5JRLGxX1dnX" class="colab-root">Reproduce in a <span class="colab-span">Notebook</span></a>
+  </figcaption>
+</figure></p>
 <p>The animation above shows three different models trained using the same settings. We let each of models develop a pattern for 100 CA steps, and then damage it in five different ways: by removing different halves of the formed pattern, and by cutting out a square from the center. Once again, we see that these models show quite different out-of-training mode behaviour. “Model 3” has even developed quite strong regenerative capabilities, without being explicitly trained for it! </p>
 
 <p>Since we trained our coupled system of cells to generate an attractor towards a target shape from a single cell, it was likely that these systems, once damaged, would generalize towards non self-destructive reactions. That’s because the systems were trained to grow, stabilize, and never entirely self-destruct. Some of these systems might naturally gravitate towards regenerative capabilities, but nothing stops them from developing different behaviors such as explosive mitoses (uncontrolled growth), unresponsiveness to damage (overstabilization), or even self destruction, especially for the more severe types of damage.</p>
 
 <p>If we want our model to show more consistent and accurate regenerative capabilities, we can try to increase the basin of attraction for our attractor, that is the space of cell configurations that naturally gravitate towards our target shape. We will do this by damaging a few pool-sampled states before each training step. The systems will now also have to be able to regenerate from configurations damaged by random circles. Our hope is that it will generalize to regenerate from as many types of damage as possible.</p>
 
-<figure>    <video loop autoplay playsinline muted>
+<p><figure>
+    <video loop autoplay playsinline muted>
       <source src="figures/batches.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
-</figure>
+  <figcaption>
+  Damaging samples in the pool encourages the learning of robust regenerative qualities. <br><br> <a href="https://colab.research.google.com/drive/1oqVn8ReE7vp77nQLSWAY3v3O_0y-n87Q#scrollTo=QeXZKb5v2gxj" class="colab-root">Reproduce in a <span class="colab-span">Notebook</span></a>
+  </figcaption>
+</figure></p>
 <p>The animation above shows training progress, which includes sample damage. We sample 8 states from the pool. Then we replace the highest-loss sample (leftmost) with the seed, and damage three lowest-loss (rightmost) states by setting a random circular region to zeros. The bottom row shows states after CA iterations applied. These states get injected back into the pool.</p>
 
-<figure>    <video loop autoplay playsinline muted>
+<p><figure>
+    <video loop autoplay playsinline muted>
       <source src="figures/regen2.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
+  <figcaption>
+Patterns exposed to damage during training exhibit astounding regenerative capabilities. <br><br> <a href="https://colab.research.google.com/drive/1oqVn8ReE7vp77nQLSWAY3v3O_0y-n87Q#scrollTo=TDzJM69u4_8p" class="colab-root">Reproduce in a <span class="colab-span">Notebook</span></a>
+  </figcaption>
 </figure>
+</p>
 <p>As we can see from the animation above, models that were exposed to damages during training are much more robust, also for out of training types of damages.  </p>
 
 <h2>Experiment 4: Rotating the perceptive field</h2>
-<p>As previously described, we model the cell perception of neighbouring cells by estimating gradient vectors of state channels with Sobel filters. One can also think that each agent has two sensors that perceive directional derivatives of state vectors across its neighborhood along x and y axes. What happens if we rotate those sensors? We can do this by replacing Sobel kernels with their 2D rotation matrix-weighted counterparts.</p>
+<p>As previously described, we model the cell perception of neighbouring cells by estimating the gradients of state channels in $\vec{x}$ and $\vec{y}$ using Sobel filters. A convenient analogy is that each agent has two sensors (chemosensory receptors, for instance) pointing in orthogonal directions that can sense the gradients in the concentration of certain chemicals along the axis of the sensor. What happens if we rotate those sensors? We can do this by replacing the Sobel kernels with its rotation matrix weighted counterpart.</p>
 <figure>$
 \begin{bmatrix}
   K_x \\
@@ -435,9 +463,18 @@ input[type=range] {
   Sobel_y
   \end{bmatrix}
 $</figure>
-<p>This simple modification of the perceptive field produces rotated versions of the pattern without retraining the model for any angle of choice!</p>
-<figure><img src="figures/rotation.png"></figure>
-<p>In a perfect world, not quantized by individual cells in a lattice, this would not be too surprising, as, after all, one would expect the perceived gradients in $\vec{x}$ and $\vec{y}$ to be invariant to the chosen angle. However, successfully rotating the pattern in a pixel based model suggests that it’s very robust to perturbations outside of those which it has experienced during training, as rotating such a pattern on a 2D grid involves a mapping that’s not necessarily bijective and in most cases will involve interpolating between pixels. For instance, it can be observed that the model can easily learn to reproduce a target pattern consisting of a pixel-width straight black line, pointing in $\vec{x}$. Rotating the perception kernels by $2\pi/8$ produces the expected slanted black line at 45 degrees, with pixel perfect placement along the diagonal. Upon investigation, however, we can see that the gradient observed along the line’s axis is of an entirely different magnitude in the rotated case due to the imperfect nature of the sobel kernel as an estimate for the gradient. </p>
+<p>This simple modification of the perceptive field produces rotated versions of the pattern for an angle of choosing without retraining as seen below.</p>
+<p><figure>
+    <img src="figures/rotation.png">
+  <figcaption>
+Rotating the axis along which the perception step computes gradients brings about rotated versions of the pattern. <br><br> <a href="https://colab.research.google.com/drive/1oqVn8ReE7vp77nQLSWAY3v3O_0y-n87Q#scrollTo=1CVR9MeYnjuY" class="colab-root">Reproduce in a <span class="colab-span">Notebook</span></a>
+  </figcaption>
+</figure>
+</p>
+
+<p>In a perfect world, not quantized by individual cells in a pixel-lattice, this would not be too surprising, as, after all, one would expect the perceived gradients in $\vec{x}$ and $\vec{y}$ to be invariant to the chosen angle - a simple change of frame of reference. However, it is important to note that things are not as simple in a pixel based model. Rotating pixel based graphics involves computing a mapping that’s not necessarily bijective and classically involves interpolating between pixels to achieve the desired result. This is because a single pixel, when rotate, will now likely overlap several pixels. The successful growth of patterns as above suggests a certain robustness to the underlying conditions outside of those experienced during training.</p>
+
+<p>For instance, it can be observed that the model can easily learn to reproduce a target pattern consisting of a pixel-width straight black line, pointing in $\vec{x}$. Rotating the perception kernels by $2\pi/8$ produces the expected slanted black line at 45 degrees, with pixel perfect placement along the diagonal. Upon investigation, however, we can see that the gradient observed along the line’s axis is of an entirely different magnitude in the rotated case due to the imperfect nature of the sobel kernel as an estimate for the gradient. </p>
 
 <h2>WebGL Playground</h2>
 <p>Starting from our first experiments on Neural CA growth and regeneration, we wanted to challenge our models with new situations not seen during training, like removing large portions of the pattern, or seeding multiple instances side-by-side. To facilitate exploration and sharing of our models, we created a TensorFlow.js playground that allowed us to interact with trained models right in a browser. The code for exporting and loading CA models in TF.js format is available in the accompanying Colab notebook.</p>
@@ -456,17 +493,22 @@ $</figure>
 <h2>Related work</h2>
 <h3>CA and PDEs</h3>
 <p>There exists a giant body of literature that describes various flavours of cellular automata and PDE systems, and their applications to modelling physical, biological or even social systems. Albeit it would be impossible to present a just overview of this field in a few lines, we hereby describe some prominent examples that inspired this work. Alan Turing introduced his famous Turing patterns back in 1952 <d-cite key="turing1990chemical"></d-cite>, suggesting how reaction-diffusion systems can be a valid modeling for chemical behaviors during morphogenesis. A particularly inspiring reaction-diffusion model that stood the test of time is the Gray-Scott model <d-cite key="Pearson189"></d-cite>, showing an extreme variety of behaviors controlled by just a few variables.</p>
-<p>Since when von Neumann introduced CA <d-cite key="10.5555/1102024"></d-cite> as models for self-replication, CA have been captivating researchers’ minds, who observed extremely complex behaviours emerging from very simple rules. Likewise, the broader audience was seduced by CA’s life-like behaviours thanks to Conway’s Game of Life <d-cite key="10.2307/24927642"></d-cite>. Perhaps motivated in part by the proof that something as simple as the Rule 110 is Turing complete, Wolfram's \textit{A New Kind of Science} asks for a paradigm shift, centered around the extensive usage of elementary computer programs such as CA as tools for understanding the world.</p>
+<p>Since when von Neumann introduced CA <d-cite key="10.5555/1102024"></d-cite> as models for self-replication, CA have been captivating researchers’ minds, who observed extremely complex behaviours emerging from very simple rules. Likewise, the broader audience was seduced by CA’s life-like behaviours thanks to Conway’s Game of Life <d-cite key="10.2307/24927642"></d-cite>. Perhaps motivated in part by the proof that something as simple as the Rule 110 is Turing complete, Wolfram's “<i>A New Kind of Science”</i> <d-cite key="Wolfram2002ANK"></d-cite> asks for a paradigm shift, centered around the extensive usage of elementary computer programs such as CA as tools for understanding the world.</p>
 <p>More recently, several researchers generalized Conway’s Game of life to work on more continuous domains. We were particularly inspired by Rafler’s SmoothLife <d-cite key="rafler2011generalization"></d-cite> and Chan’s Lenia <d-cite key="Chan_2019, Reinke2019IntrinsicallyME"></d-cite>, the latter of which also discovers and classifies entire species of “lifeforms”.</p>
 
 <p>A number of researchers used evolutionary algorithms to find CA rules that reproduce predefined simple patterns <d-cite key="10.1007/978-3-642-19167-1_2, Nichele2018CANEATEC"></d-cite>. For example, J. Miller <d-cite key="Miller2004"></d-cite> proposed a very similar experiment setup, using evolutionary algorithms to design a CA rule that could build and regenerate the French flag, starting from a seed cell.</p>
 <h3>Neural Networks and Self-Organisation</h3>
-<p>The close relation between Convolutional Neural Networks and Cellular Automata was already observed by a number of researchers <d-cite key="wulff1993learning, Gilpin2018CellularAA"></d-cite>. The connection is so strong it allows to build Neural CA models using components readily available in popular ML frameworks. Thus, using a different jargon, our Neural CA can also be named Recurrent Residual Convolutional Networks.</p>
+<p>The close relation between Convolutional Neural Networks and Cellular Automata was already observed by a number of researchers <d-cite key="wulff1993learning, Gilpin2018CellularAA"></d-cite>. The connection is so strong it allows to build Neural CA models using components readily available in popular ML frameworks. Thus, using a different jargon, our Neural CA can also be named Recurrent Residual Convolutional Networks with “per-pixel” Dropout.</p>
 
 <p>Neural GPU <d-cite key="Kaiser2015NeuralGPU, Freivalds2017ImprovingTN"></d-cite> offers a computational architecture very similar to ours, but applied in the context of multiplication and sorting algorithm learning.</p>
 
 <p>Looking more broadly, we think that the concept of self-organisation is finding its way into mainstream machine learning with popularisation of Graph Neural Network <d-cite key="wu2019comprehensive"></d-cite> models. Typically, GNNs run a repeated computation across vertices of a (possibly dynamic) graph. Vertices communicate locally through graph edges, and aggregate global information required to perform the task over multiple rounds of message exchanges. As if atoms talk to each other to figure out properties of a molecule <d-cite key="NIPS2015_5954"></d-cite>, or points of the point cloud talk to their neighbors to figure out their global shape <d-cite key="Wang_2019"></d-cite>.</p>
 <h2>Discussion</h2>
+<p>Let’s take a break and take a fresh look at models we’ve built in this article. They exist in a simulation that runs on a powerful GPU of a modern computer or a smartphone. Yet, let’s speculate about what a “more physical” implementation of such a system could look like? We can imagine it as grid tiny independent computers, simulating individual cells. Each of those computers must have about 10Kb of ROM to store the neural network weights and the control code (“genome”), and just about 256 bytes of RAM for the cell state and intermediate activations. The cells must be able to communicate their 16-value state vectors to neighbors. Each cell should also have an RGB-diode to display the color of the pixel it represents. A single cell update would require about 10k multiply-add operations and doesn't have to be synchronised across the grid. We can think that cells wait for random time intervals between updates.</p>
+
+<p>The system described above is uniform and decentralised. Yet, our method provides a way to program it to reach the predefined global state, and recover this state in case of multi-element failures and restarts.</p>
+
+<p>Although this article describes a toy embryogenesis and regeneration model, we think that our main contribution is the <strong>demonstration of applicability of Differentiable Programming for designing Self-Organising Systems</strong>.</p>
 
 </d-article>
 <d-appendix>
