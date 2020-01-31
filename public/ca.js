@@ -189,16 +189,22 @@ const PROGRAMS = {
     }`,
     vis: `
     uniform float u_raw;
+    uniform vec3 u_lastDamage;
     varying vec2 uv;
+
     void main() {
         vec2 xy = vec2(uv.x, 1.0-uv.y);
         if (u_raw > 0.5) {
             gl_FragColor = texture2D(u_input_tex, xy);
             gl_FragColor.a = 1.0;
         } else {
-            xy *= u_input.size;    
+            xy *= u_input.size;
             vec4 rgba = u_input_read(xy, 0.0);
             gl_FragColor = 1.0-rgba.a + rgba;
+            if (length(xy-u_lastDamage.xy) < u_lastDamage.z) {
+                gl_FragColor.rgb *= 0.7;
+                gl_FragColor.rgb += vec3(0.3, 0.3, 0.0);
+            }
         }
     }`
 }
@@ -321,12 +327,6 @@ export function createCA(gl, layerWeights, gridSize) {
         ()=>runLayer('update', newStateBuf, {u_input: stateBuf, u_update: maskedUpdateBuf}),
     ];
 
-    function paint(x, y, r, brush) {
-        runLayer('paint', stateBuf, {
-            u_pos: [x, y], u_r: r,
-            u_brush: {clear: 0.0, seed: 1.0}[brush],
-        });
-    }
 
 
     let fpsStartTime;
@@ -340,7 +340,16 @@ export function createCA(gl, layerWeights, gridSize) {
       return totalStepCount;
     }
 
-    
+    let lastDamage = [0, 0, -1];
+    function paint(x, y, r, brush) {
+        runLayer('paint', stateBuf, {
+            u_pos: [x, y], u_r: r,
+            u_brush: {clear: 0.0, seed: 1.0}[brush],
+        });
+        if (brush == 'clear' && r < 1000) {
+            lastDamage = [x, y, r]; 
+        }
+    }
     function reset() {
       paint(0, 0, 10000, 'clear');
       paint(gridW/2, gridH/2, 1, 'seed');
@@ -372,7 +381,8 @@ export function createCA(gl, layerWeights, gridSize) {
         visMode = visMode || 'color';
         gl.useProgram(progs.vis.program);
         twgl.setBuffersAndAttributes(gl, progs.vis, quad);
-        const uniforms = {u_raw: 0.0}
+        const uniforms = {u_raw: 0.0, u_lastDamage: lastDamage}
+        lastDamage[2] = Math.max(-0.1, lastDamage[2]-1.0);
         let inputBuf = stateBuf;
         if (visMode != 'color') {
             inputBuf = {stateBuf, perceptionBuf, hiddenBuf, updateBuf, maskedUpdateBuf}[visMode+'Buf'];

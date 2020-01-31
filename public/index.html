@@ -94,9 +94,9 @@
     row-gap: 10px;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1000px) {
   #demo {
-    grid-template-columns: 1fr 280px;
+    grid-template-columns: 1fr 300px;
     grid-template-rows: auto auto;
   }
 }
@@ -111,8 +111,10 @@
     line-height: 1em;
     display: grid;
     grid-template-columns: 120px auto;
-    grid-template-rows: 100px 60px auto;
+    grid-template-rows: auto 60px 1fr;
     row-gap: 1em;
+    white-space: nowrap;
+    overflow: hidden;
 }
 #pattern-selector {
     grid-column: 1/3;
@@ -120,6 +122,12 @@
     grid-template-columns: repeat(5, auto);
     justify-items: center;
 }
+@media (max-width: 1000px) and  (min-width: 500px) {
+  #pattern-selector {
+    grid-template-columns: repeat(10, auto);
+  }
+}
+
 #pattern-selector * {
     width: 40px;
     height: 40px;
@@ -155,6 +163,7 @@ input[type=range] {
 #status {
     font-size: 12px;
     color: rgba(0, 0, 0, 0.6);
+    font-family: monospace;
 }
 </style>
 
@@ -184,7 +193,10 @@ input[type=range] {
         <div>
             Speed: <span id="speedLabel"></span><br>
             <input type="range" id="speed" min="-3" max="3" step="1" value="0"><br>
-            <span id="status"></span>
+            <div id="status">
+                Step <span id="stepCount"></span>
+                (<span id="ips"></span> step/s)
+            </div>
         </div>
         <div id="model-selector">
             Model type:<br>

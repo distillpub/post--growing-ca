@@ -83,24 +83,28 @@ export function createDemo(divId) {
       }
   
       let doubleClick = false;
+      let justSeeded = false;
       function click(pos) {
         const [x, y] = pos;
         if (doubleClick) {
           demo.paint(x, y, 1, 'seed');
           doubleClick = false;
+          justSeeded = true;
+          setTimeout(()=>{ justSeeded = false; }, 100);
         } else {
           doubleClick = true;
-          setTimeout(()=>{
-            doubleClick = false;
+          setTimeout(()=>{ 
+            doubleClick = false; 
           }, 300);
           demo.paint(x, y, 8, 'clear');
         }
       }
       function move(pos) {
         const [x, y] = pos;
-        demo.paint(x, y, 8, 'clear');
+        if (!justSeeded) {
+          demo.paint(x, y, 8, 'clear');
+        }
       }
-      
 
       canvas.onmousedown = e => {
         e.preventDefault();
@@ -147,7 +151,7 @@ export function createDemo(divId) {
     let frameCount = 0;
   
     function render(time) {
-      if  (!isInViewport(root)) {
+      if  (!isInViewport(canvas)) {
         requestAnimationFrame(render);
         return;
       }
@@ -164,21 +168,17 @@ export function createDemo(divId) {
           stepsPerFrame = Math.max(1, stepsPerFrame);
           stepsPerFrame = Math.min(stepsPerFrame, [1, 2, 4, Infinity][speed])
         }
-      } else {
-        stepsPerFrame = 0;
+        demo.setAngle($('#rotation').value);
+        for (let i=0; i<stepsPerFrame; ++i) {
+          demo.step();
+        }
+        $("#stepCount").innerText = demo.getStepCount();
+        $("#ips").innerText = demo.fps();
       }
       lastDrawTime = time;
 
-      demo.setAngle($('#rotation').value);
-      for (let i=0; i<stepsPerFrame; ++i) {
-        demo.step();
-      }
       twgl.bindFramebufferInfo(gl);
       demo.draw();
-      
-      $("#status").innerText = `Step ${demo.getStepCount()}`;
-      if (demo.fps())
-        $("#status").innerText += ` (${demo.fps()} step/sec)`;
       requestAnimationFrame(render);
     }
 }
