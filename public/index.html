@@ -106,6 +106,37 @@
       background: white;
       border-color: rgba(0, 0, 0, 0.2);
     }
+    /* TOC */
+    #contents nav a {
+      color: rgba(0, 0, 0, 0.8);
+      border-bottom: none;
+      text-decoration: none;
+    }
+
+    #contents nav ul li {
+      margin-bottom: .25em;
+    }
+
+    #contents nav a:hover {
+      text-decoration: underline solid rgba(0, 0, 0, 0.6);
+    }
+
+    #contents nav ul {
+      margin-top: 0;
+      margin-bottom: 6px;
+    }
+
+
+    #contents nav>div {
+      display: block;
+      outline: none;
+      margin-bottom: 0.5em;
+    }
+
+    #contents nav>div>a {
+      font-size: 13px;
+      font-weight: 600;
+    }
   </style>
 
   <d-title>
@@ -257,10 +288,30 @@ input[type=range] {
 
 </d-title>
 
-<d-article>
-<p>All multicellular organisms begin their life as a single egg cell. Being able to build their own bodies is probably the most fundamental skill every living creature possesses. Morphogenesis (the process of an organism’s shape development) is one of the most striking examples of self-organisation. Cells, the tiny building blocks of bodies, communicate with their neighbors to decide the shape of organs and body plans, where to grow each organ, how to interconnect them, and when to eventually stop. How complex bodies reliably form, and how cell activity stops when the exactly correct shape is complete, is an active area of research, trying to understand the interplay of the emergence of complex outcomes from simple rules and homeostatic loops that seek to reduce error (or distance from a correct Target Morphology) <d-cite key="PezzuloGiovanniLevin2016,C5IB00221D"></d-cite>. What is clear is that evolution has learned to exploit the laws of physics and computation to implement the highly robust morphogenetic software that runs on genome-encoded cellular hardware.</p>
+<d-byline></d-byline>
 
-<p>This process is extremely robust to perturbations. Even when the organism is fully developed, some species still have the capability to repair damage - a process known as regeneration. Some creatures, such as salamanders, can fully regenerate vital organs, limbs, eyes, or even parts of the brain! Morphogenesis is a surprisingly adaptive process. Sometimes even a very atypical development process can result in a viable organism - for example, the parts of an early mammalian embryo cut into pieces will each form a complete individual - monozygotic twins! The biggest puzzle in this field is how the cell collective knows what to build and when to stop. The sciences of genomics and stem cell biology are only part of the puzzle, as they explain the distribution of specific components in each cell, and the establishment of different types of cells. While many genes are known that are <i>required</i> for the process of regeneration, we still do not know the algorithm <i>sufficient</i> for cells to know how to build or remodel complex organs to a very specific anatomical end-goal. It is also becoming clear that the software of life possesses numerous modules or subroutines, such as “build an eye here”, which can be activated with simple signal triggers. Discovery of such subroutines and a mapping out of the developmental logic is a new field at the intersection of developmental biology and computer science. It is now essential to try to formulate computational models of this process, both to enrich the conceptual toolkit of biologists and to help translate the discoveries of biology into better robotics and computational technology.</p>
+  <div id="contents" class="base-grid" style="border-top: 1px solid #eee; padding: 1.5rem 0;">
+    <nav class="l-text toc figcaption">
+      <h3>Contents</h3>
+      <div><a href="#model">Model</a></div>
+      <div><a href="#experiment-1">Experiment 1: Learning to Grow</a></div>
+      <div><a href="#experiment-2">Experiment 2: What persists, exists</a></div>
+      <div><a href="#experiment-3">Experiment 3: Learning to regenerate</a></div>
+      <div><a href="#experiment-4">Experiment 4: Rotating the percceptive field</a></div>
+      <div><a href="#webgl-playground">WebGL Playground</a></div>
+      <div><a href="#related-work">Related Work</a></div>
+      <div><a href="#discussion">Discussion</a></div>
+      <!--- <ul>
+        <li><a href="#acknowledgements">Acknowledgements</a></li>
+        <li><a href="#contributions">Contributions</a></li>
+      </ul> -->
+    </nav>
+  </div>
+
+<d-article>
+<p>Most multicellular organisms begin their life as a single egg cell - a single cell whose progeny reliably self-assemble into highly complex anatomies with many organs and tissues in precisely the same arrangement each time. Being able to build their own bodies is probably the most fundamental skill every living creature possesses. Morphogenesis (the process of an organism’s shape development) is one of the most striking examples of self-organisation. Cells, the tiny building blocks of bodies, communicate with their neighbors to decide the shape of organs and body plans, where to grow each organ, how to interconnect them, and when to eventually stop. How complex bodies reliably form, and how cell activity stops when the exactly correct shape is complete, is an active area of research, trying to understand the interplay of the emergence of complex outcomes from simple rules and homeostatic loops that seek to reduce error (or distance from a correct Target Morphology) <d-cite key="PezzuloGiovanniLevin2016,C5IB00221D"></d-cite>. What is clear is that evolution has learned to exploit the laws of physics and computation to implement the highly robust morphogenetic software that runs on genome-encoded cellular hardware.</p>
+
+<p>This process is extremely robust to perturbations. Even when the organism is fully developed, some species still have the capability to repair damage - a process known as regeneration. Some creatures, such as salamanders, can fully regenerate vital organs, limbs, eyes, or even parts of the brain! Morphogenesis is a surprisingly adaptive process. Sometimes even a very atypical development process can result in a viable organism - for example, the parts of an early mammalian embryo cut into pieces will each form a complete individual - monozygotic twins! The biggest puzzle in this field is how the cell collective knows what to build and when to stop. The sciences of genomics and stem cell biology are only part of the puzzle, as they explain the distribution of specific components in each cell, and the establishment of different types of cells. While many genes are known that are <i>required</i> for the process of regeneration, we still do not know the algorithm <i>sufficient</i> for cells to know how to build or remodel complex organs to a very specific anatomical end-goal. Thus, one major lynch-pin of future biomedicine is the discovery of how large-scale anatomy is specified within cell collectives, and how we can rewrite this information to have rational control of growth and form. It is also becoming clear that the software of life possesses numerous modules or subroutines, such as “build an eye here”, which can be activated with simple signal triggers. Discovery of such subroutines and a mapping out of the developmental logic is a new field at the intersection of developmental biology and computer science. It is now essential to try to formulate computational models of this process, both to enrich the conceptual toolkit of biologists and to help translate the discoveries of biology into better robotics and computational technology.</p>
 
 <p>Imagine if we could design systems of such plasticity and robustness: structures and machines that could grow and repair themselves. This information would transform the current efforts in regenerative medicine, where scientists and clinicians seek to discover the inputs or stimuli that could cause cells in the body to build structures on demand as needed. To help crack the puzzle of the morphogenetic code, and also exploit the insights of biology to create self-repairing systems in real life, we try to replicate some of the desired properties in an <i>in silico</i> experiment.</p>
 
@@ -271,7 +322,7 @@ input[type=range] {
 <p>Let’s try to develop a cellular automata update rule that, starting from a single cell, will produce a predefined multicellular pattern on a 2D grid. This is our analogous toy model of organism development. To design the CA, we must specify the possible cell states, and their update function. Typical CA models represent cell states with a set of discrete values, although variants using vectors of continuous values exist. The use of continuous values has the virtue of allowing the update rule to be a differentiable function of a cell’s neighbourhood state. The rules that guide individual cell behavior based on the local environment are analogous to the low-level hardware specification encoded by the genome of an organism. Running our model for a set amount of steps from a starting configuration will reveal the patterning behavior that is enabled by such hardware.</p>
 
 <p>So - what is so special about differentiable update rules? They will allow us to use the powerful language of loss functions to express our wishes, and the extensive existing machinery around gradient-based numerical optimization to fulfill them. The art of stacking together differentiable functions, and optimizing their parameters to perform various tasks has a long history. In recent years it has flourished under various names, such as (Deep) Neural Networks, Deep Learning or Differentiable Programming.</p>
-<h2>Model</h2>
+<h2 id='model'>Model</h2>
 <p><figure style="margin-left:auto; margin-right: auto; grid-column:page; width:100%; max-width:2000px;">
   <object data="figures/model.svg" type="image/svg+xml" style="width:100%"></object>
   <figcaption style="">
@@ -284,8 +335,9 @@ input[type=range] {
 
 <p>The alpha channel ($\alpha$) has a special meaning: it demarcates living cells, those belonging to the pattern being grown. In particular, cells having $\alpha > 0.1$ and their neighbors are considered “living”. Other cells are “dead” or empty and have their state vector values explicitly set to 0.0 at each time step. Thus cells with $\alpha > 0.1$ can be thought of as “mature”, while their neighbors with $\alpha \leq 0.1$ are “growing”, and can become mature if their alpha passes the 0.1 threshold.</p>
 
-<figure>  <img src="figures/amask.svg" />  
+<figure>  <img src="figures/alive2.svg" style="width: 300px" />  
 <figcaption> $\vec{state} \rightarrow 0.00$ when no neighbour with $\alpha > 0.10$ </figcaption></figure>
+
 
 <p>Hidden channels don’t have a predefined meaning, and it’s up to the update rule to decide what to use them for. They can be interpreted as concentrations of some chemicals, electric potentials or some other signaling mechanism that are used by cells to orchestrate the growth. In terms of our biological analogy - all our cells share the same genome (update rule) and are only differentiated by the information encoded the chemical signalling they receive and emit and store internally (their state vectors).</p>
 
@@ -360,7 +412,7 @@ input[type=range] {
 
 
 
-<h2>Experiment 1: Learning to Grow</h2>
+<h2 id='experiment-1'>Experiment 1: Learning to Grow</h2>
 <p><figure style="margin-left:auto; margin-right: auto; grid-column:page; width:100%; max-width:900px;">
   <object data="figures/training.svg" type="image/svg+xml" style="width:100%"></object>
   <figcaption>
@@ -388,7 +440,7 @@ input[type=range] {
 </figure></p>
 
 <p>We can see that different training runs can lead to models with drastically different long term behaviours. Some tend to die out, some don’t seem to know how to stop growing, but some happen to be almost stable! How can we steer the training towards producing persistent patterns all the time?</p>
-<h2>Experiment 2: What persists, exists</h2>
+<h2 id='experiment-2'>Experiment 2: What persists, exists</h2>
 <p>One way of understanding why the previous experiment was unstable is to draw a parallel to dynamical systems. We can consider every cell to be a dynamical system, with each cell sharing the same dynamics, and all cells being locally coupled amongst themselves. When we train our cell update model - we are adjusting these dynamics. Our goal is to find dynamics for the cell such that the target pattern is an attractor and a fixed-point of the the overall coupled system. </p>
 
 <p>Our first experiment encouraged the dynamics of the coupled system to evolve in such a way as to reach the target pattern in about 64 to 96 steps, starting from a single black pixel (the seed). This likely defines an attractor acting only over the space of states visited between the seed and the target pattern. However we have not explicitly influenced the dynamics of the CA for the states it experiences shortly after 96 steps - thus it is likely the target pattern at this point is not a fixed point and that the dynamics result in a divergence from the target pattern.</p>
@@ -443,7 +495,7 @@ input[type=range] {
   </figcaption>
 </figure></p>
 
-<h2>Experiment 3: Learning to regenerate</h2>
+<h2 id='experiment-3'>Experiment 3: Learning to regenerate</h2>
 <p>In addition to being able to grow their own bodies, living creatures are great at maintaining them. Not only worn out skin gets replaced with new, but very heavy damages to complex vital organs can be regenerated by some creatures. Is there a chance that some of the models we trained above have regenerative capabilities?</p>
 
 <p><figure>
@@ -484,7 +536,7 @@ Patterns exposed to damage during training exhibit astounding regenerative capab
 </p>
 <p>As we can see from the animation above, models that were exposed to damages during training are much more robust, also for out of training types of damages.  </p>
 
-<h2>Experiment 4: Rotating the perceptive field</h2>
+<h2 id='experiment-4'>Experiment 4: Rotating the perceptive field</h2>
 <p>As previously described, we model the cell perception of neighbouring cells by estimating the gradients of state channels in $\vec{x}$ and $\vec{y}$ using Sobel filters. A convenient analogy is that each agent has two sensors (chemosensory receptors, for instance) pointing in orthogonal directions that can sense the gradients in the concentration of certain chemicals along the axis of the sensor. What happens if we rotate those sensors? We can do this by replacing the Sobel kernels with its rotation matrix weighted counterpart.</p>
 <figure>$
 \begin{bmatrix}
@@ -511,8 +563,8 @@ Rotating the axis along which the perception step computes gradients brings abou
 </figure>
 </p>
 
-<p>In a perfect world, not quantized by individual cells in a pixel-lattice, this would not be too surprising, as, after all, one would expect the perceived gradients in $\vec{x}$ and $\vec{y}$ to be invariant to the chosen angle - a simple change of frame of reference. However, it is important to note that things are not as simple in a pixel based model. Rotating pixel based graphics involves computing a mapping that’s not necessarily bijective and classically involves interpolating between pixels to achieve the desired result. This is because a single pixel, when rotate, will now likely overlap several pixels. The successful growth of patterns as above suggests a certain robustness to the underlying conditions outside of those experienced during training.</p>
-<h2>WebGL Playground</h2>
+<p>In a perfect world, not quantized by individual cells in a pixel-lattice, this would not be too surprising, as, after all, one would expect the perceived gradients in $\vec{x}$ and $\vec{y}$ to be invariant to the chosen angle - a simple change of frame of reference. However, it is important to note that things are not as simple in a pixel based model. Rotating pixel based graphics involves computing a mapping that’s not necessarily bijective and classically involves interpolating between pixels to achieve the desired result. This is because a single pixel, when rotated, will now likely overlap several pixels. The successful growth of patterns as above suggests a certain robustness to the underlying conditions outside of those experienced during training.</p>
+<h2 id='webgl-playground'>WebGL Playground</h2>
 <p>Starting from our first experiments on Neural CA growth and regeneration, we wanted to challenge our models with new situations not seen during training, like removing large portions of the pattern, or seeding multiple instances side-by-side. To facilitate exploration and sharing of our models, we created a TensorFlow.js playground that allowed us to interact with trained models right in a browser. The code for exporting and loading CA models in TF.js format is available in the accompanying Colab notebook.</p>
 
 <p>Later during the work on this article, we decided to see how far we can push the performance and portability of this playground. We reimplemented all necessary operations from scratch using the WebGL API and GLSL shader language. This implementation powers the demo that can be found on the top of this page. We decided to quantize all model parameters and activations to 8-bit values, in order to maximize the performance and compatibility with mobile hardware.</p>
@@ -526,10 +578,12 @@ Rotating the axis along which the perception step computes gradients brings abou
 <ul><li><strong>Model type</strong> –<strong> </strong>selects between model variants that are trained following different procedures, described in the experiment sections 1-3.</li></ul>
 <ul><li><strong>Rotation</strong> – controls the rotation applied to the perceived activation gradients, as described in the experiment section 4.</li></ul>
 <ul><li><strong>Speed</strong> – simulation speed, from “paused” to “Full throttle”. “Full throttle” mode tries to load the GPU with as many iterations per second as possible. Use it cautiously, as it can result in reduction of system performance.</li></ul>
-<h2>Related work</h2>
+<h2 id='related-work'>Related work</h2>
 <h3>CA and PDEs</h3>
 <p>There exists a giant body of literature that describes various flavours of cellular automata and PDE systems, and their applications to modelling physical, biological or even social systems. Albeit it would be impossible to present a just overview of this field in a few lines, we hereby describe some prominent examples that inspired this work. Alan Turing introduced his famous Turing patterns back in 1952 <d-cite key="turing1990chemical"></d-cite>, suggesting how reaction-diffusion systems can be a valid modeling for chemical behaviors during morphogenesis. A particularly inspiring reaction-diffusion model that stood the test of time is the Gray-Scott model <d-cite key="Pearson189"></d-cite>, showing an extreme variety of behaviors controlled by just a few variables.</p>
+
 <p>Since when von Neumann introduced CA <d-cite key="10.5555/1102024"></d-cite> as models for self-replication, CA have been captivating researchers’ minds, who observed extremely complex behaviours emerging from very simple rules. Likewise, the broader audience was seduced by CA’s life-like behaviours thanks to Conway’s Game of Life <d-cite key="10.2307/24927642"></d-cite>. Perhaps motivated in part by the proof that something as simple as the Rule 110 is Turing complete, Wolfram's “<i>A New Kind of Science”</i> <d-cite key="Wolfram2002ANK"></d-cite> asks for a paradigm shift, centered around the extensive usage of elementary computer programs such as CA as tools for understanding the world.</p>
+
 <p>More recently, several researchers generalized Conway’s Game of life to work on more continuous domains. We were particularly inspired by Rafler’s SmoothLife <d-cite key="rafler2011generalization"></d-cite> and Chan’s Lenia <d-cite key="Chan_2019, Reinke2019IntrinsicallyME"></d-cite>, the latter of which also discovers and classifies entire species of “lifeforms”.</p>
 
 <p>A number of researchers used evolutionary algorithms to find CA rules that reproduce predefined simple patterns <d-cite key="10.1007/978-3-642-19167-1_2, Nichele2018CANEATEC"></d-cite>. For example, J. Miller <d-cite key="Miller2004"></d-cite> proposed a very similar experiment setup, using evolutionary algorithms to design a CA rule that could build and regenerate the French flag, starting from a seed cell.</p>
@@ -539,22 +593,22 @@ Rotating the axis along which the perception step computes gradients brings abou
 <p>Neural GPU <d-cite key="Kaiser2015NeuralGPU, Freivalds2017ImprovingTN"></d-cite> offers a computational architecture very similar to ours, but applied in the context of multiplication and sorting algorithm learning.</p>
 
 <p>Looking more broadly, we think that the concept of self-organisation is finding its way into mainstream machine learning with popularisation of Graph Neural Network <d-cite key="wu2019comprehensive"></d-cite> models. Typically, GNNs run a repeated computation across vertices of a (possibly dynamic) graph. Vertices communicate locally through graph edges, and aggregate global information required to perform the task over multiple rounds of message exchanges. As if atoms talk to each other to figure out properties of a molecule <d-cite key="NIPS2015_5954"></d-cite>, or points of the point cloud talk to their neighbors to figure out their global shape <d-cite key="Wang_2019"></d-cite>.</p>
-<h2>Discussion</h2>
-<p>Let’s take a break and take a fresh look at models we’ve built in this article. They exist in a simulation that runs on a powerful GPU of a modern computer or a smartphone. Yet, let’s speculate about what a “more physical” implementation of such a system could look like? We can imagine it as grid tiny independent computers, simulating individual cells. Each of those computers must have about 10Kb of ROM to store the neural network weights and the control code (“genome”), and just about 256 bytes of RAM for the cell state and intermediate activations. The cells must be able to communicate their 16-value state vectors to neighbors. Each cell should also have an RGB-diode to display the color of the pixel it represents. A single cell update would require about 10k multiply-add operations and doesn't have to be synchronised across the grid. We can think that cells wait for random time intervals between updates.</p>
+<h2 id='discussion'>Discussion</h2>
+<p>Let’s take a break and have a fresh look at the models we’ve built in this article. They exist in a simulation that runs on a powerful GPU of a modern computer or a smartphone. Yet, let’s speculate about what a “more physical” implementation of such a system could look like. We can imagine it as a grid of tiny independent computers, simulating individual cells. Each of those computers must have about 10Kb of ROM to store the neural network weights and the control code (“genome”), and just about 256 bytes of RAM for the cell state and intermediate activations. The cells must be able to communicate their 16-value state vectors to neighbors. Each cell should also have an RGB-diode to display the color of the pixel it represents. A single cell update would require about 10k multiply-add operations and does not have to be synchronised across the grid. We can think that cells wait for random time intervals between updates.</p>
 
 <p>The system described above is uniform and decentralised. Yet, our method provides a way to program it to reach the predefined global state, and recover this state in case of multi-element failures and restarts.</p>
 
-<p>Although this article describes a toy embryogenesis and regeneration model, we think that our main contribution is the <strong>demonstration of applicability of Differentiable Programming for designing Self-Organising Systems</strong>.</p>
+<p>Although this article describes a toy embryogenesis and regeneration model, we think that our main contribution is the <strong>demonstration of applicability of Differentiable Programming for designing Self-Organising Systems</strong>. This is a major direction for future work. In addition to the implications for understanding the evolution and control of regeneration, and its harnessing for biomedical repair, there is the field of bioengineering. As the field transitions from synthetic biology of single cell collectives to a true synthetic morphology of novel living machines <d-cite key="Kriegman1853, Kamm2018"></d-cite>, it will be essential to develop strategies for programming system-level capabilities, such as anatomical homeostasis (regenerative repair). </p>
 
 </d-article>
 <d-appendix>
 <h3>Acknowledgments</h3>
-<p>Michael Levin, Bert Chan, Mark Sandler, Blaise, Andrew Jackson (proofreading), Damien</p>
+<p>Bert Chan, Mark Sandler, Blaise, Andrew Jackson (proofreading), Damien</p>
 
 <h3>Author Contributions</h3>
-<p><strong>Research:</strong> The idea of using differentiable programming for modelling regeneration and designing self-organising systems was proposed by Michael Levin in his email to Alex Mordvintsev, that was sent following the DeepDream [DeepDream] publication in 2015. The actual work was triggered by the talk [WhatBodiesThink] given by Michael at NeurIPS 2018, and the subsequent email exchange with him. </p>
+<p><strong>Research:</strong> The idea of applicability of neural networks for understanding regeneration and designing self-organising systems was proposed by Michael Levin in his email to Alex Mordvintsev, that was sent following the DeepDream <d-cite key="mordvintsev2015inceptionism"></d-cite> publication by Alex in 2015. The actual work was triggered by the talk <d-cite key="WhatBodiesThink"></d-cite> given by Michael at NeurIPS 2018, and the subsequent email exchange with him.</p>
 
-<p>Ettore prototyped the models and performed the first versions of the experiments. Alex simplified, further improved the models, and performed the final versions of the experiments, shown in the article.</p>
+<p>Alex came up with the Self-Organizing Asynchronous Neural Cellular Automata model and supervised Ettore, who prototyped the model and designed the training regime forperformed the first versions of the experiments. Finally, Alex added some key contributions tosimplified, further improved the model and the training regime, and performed the final versions of the experiments, shown in the article.</p>
 
 <p><strong>Demos:</strong> Alex created both the WebGL and the tf.js demo. Ettore contributed to the tf.js demo.</p>
 

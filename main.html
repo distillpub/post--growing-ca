@@ -106,6 +106,37 @@
       background: white;
       border-color: rgba(0, 0, 0, 0.2);
     }
+    /* TOC */
+    #contents nav a {
+      color: rgba(0, 0, 0, 0.8);
+      border-bottom: none;
+      text-decoration: none;
+    }
+
+    #contents nav ul li {
+      margin-bottom: .25em;
+    }
+
+    #contents nav a:hover {
+      text-decoration: underline solid rgba(0, 0, 0, 0.6);
+    }
+
+    #contents nav ul {
+      margin-top: 0;
+      margin-bottom: 6px;
+    }
+
+
+    #contents nav>div {
+      display: block;
+      outline: none;
+      margin-bottom: 0.5em;
+    }
+
+    #contents nav>div>a {
+      font-size: 13px;
+      font-weight: 600;
+    }
   </style>
 
   <d-title>
@@ -120,6 +151,26 @@
 %% demo.html
 
 </d-title>
+
+<d-byline></d-byline>
+
+  <div id="contents" class="base-grid" style="border-top: 1px solid #eee; padding: 1.5rem 0;">
+    <nav class="l-text toc figcaption">
+      <h3>Contents</h3>
+      <div><a href="#model">Model</a></div>
+      <div><a href="#experiment-1">Experiment 1: Learning to Grow</a></div>
+      <div><a href="#experiment-2">Experiment 2: What persists, exists</a></div>
+      <div><a href="#experiment-3">Experiment 3: Learning to regenerate</a></div>
+      <div><a href="#experiment-4">Experiment 4: Rotating the percceptive field</a></div>
+      <div><a href="#webgl-playground">WebGL Playground</a></div>
+      <div><a href="#related-work">Related Work</a></div>
+      <div><a href="#discussion">Discussion</a></div>
+      <!--- <ul>
+        <li><a href="#acknowledgements">Acknowledgements</a></li>
+        <li><a href="#contributions">Contributions</a></li>
+      </ul> -->
+    </nav>
+  </div>
 
 %% article.html
 
