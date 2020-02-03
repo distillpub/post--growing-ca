@@ -113,6 +113,14 @@
       text-decoration: none;
     }
 
+    #contents li {
+      list-style-type: none;
+    }
+
+    #contents ul {
+      padding-left: 1em;
+    }
+    
     #contents nav ul li {
       margin-bottom: .25em;
     }
@@ -158,17 +166,16 @@
     <nav class="l-text toc figcaption">
       <h3>Contents</h3>
       <div><a href="#model">Model</a></div>
-      <div><a href="#experiment-1">Experiment 1: Learning to Grow</a></div>
-      <div><a href="#experiment-2">Experiment 2: What persists, exists</a></div>
-      <div><a href="#experiment-3">Experiment 3: Learning to regenerate</a></div>
-      <div><a href="#experiment-4">Experiment 4: Rotating the percceptive field</a></div>
+      <div><a href="#experiment-1">Experiments</a></div>
+      <ul>
+        <li><a href="#experiment-1">Learning to Grow</a></li>
+        <li><a href="#experiment-2">What persists, exists</a></li>
+        <li><a href="#experiment-3">Learning to regenerate</a></li>
+        <li><a href="#experiment-4">Rotating the percceptive field</a></li>
+      </ul>
       <div><a href="#webgl-playground">WebGL Playground</a></div>
       <div><a href="#related-work">Related Work</a></div>
       <div><a href="#discussion">Discussion</a></div>
-      <!--- <ul>
-        <li><a href="#acknowledgements">Acknowledgements</a></li>
-        <li><a href="#contributions">Contributions</a></li>
-      </ul> -->
     </nav>
   </div>
 
@@ -176,4 +183,3 @@
 
   <d-bibliography src="bibliography.bib"></d-bibliography>
 </body>
-
