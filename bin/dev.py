@@ -18,7 +18,7 @@ def build():
     fi
     ''')
     with open('index.html', 'w') as fout:
-        for s in open('../index.html'):
+        for s in open('../main.html'):
             if s.startswith('%% '):
                 fn = '../'+s.split()[1]
                 fout.write(open(fn).read())
