@@ -30,7 +30,10 @@ export function createDemo(divId) {
         e.style.opacity = e.id==target ? 1.0 : 0.2;
       });
       $$('#model-selector input').forEach(e=>{
-        e.checked = e.id<=experiment;
+        e.checked = e.id==experiment;
+      });
+      $$('#model-hints span').forEach(e=>{
+        e.style.display = e.id.startsWith(experiment) ? "inline" : "none";
       });
       $('#play').style.display = paused? "inline" : "none";
       $('#pause').style.display = !paused? "inline" : "none";

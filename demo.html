@@ -31,9 +31,8 @@
     line-height: 1em;
     display: grid;
     grid-template-columns: 120px auto;
-    grid-template-rows: auto 60px 1fr;
-    row-gap: 1em;
-    white-space: nowrap;
+    grid-template-rows: auto 60px 80px 1fr;
+    row-gap: 20px;
     overflow: hidden;
 }
 #pattern-selector {
@@ -72,7 +71,8 @@
     grid-template-columns: 40px auto;
     align-items: center;
     column-gap: 10px;
-    line-height: 1.2em;
+    line-height: 1.4em;
+    margin-bottom: 20px;
 }
 #pointer {
     width: 40px;
@@ -85,6 +85,16 @@ input[type=range] {
     color: rgba(0, 0, 0, 0.6);
     font-family: monospace;
 }
+#model-hints {
+    color: rgba(0, 0, 0, 0.6);
+    grid-column: 1/3;
+    line-height: 1.4em;
+    user-select: text;
+}
+#model-hints span {
+    display: none;
+}
+
 </style>
 
 <div class="l-body-outset grid" id="demo">
@@ -128,6 +138,27 @@ input[type=range] {
             Rotation <span id="rotationLabel"></span><br>
             <input type="range" id="rotation" min="0" max="360" step="1" value="0"><br>
         </div>
+        <div id='model-hints'>
+            <span id="ex1-hint">
+                <b>Growing</b> models were trained to generate patterns, 
+                but don't know how to persist them. Some patterns explode, some decay,
+                but some happen to be almost stable or even regenerate parts!
+                (<a href="#experiment-1">experiment 1</a>)
+            </span>
+            <span id="ex2-hint">
+                <b>Persistent</b> models are trained to make the pattern stay for a prolonged
+                period of time. Interstingly, they often develop some regenerative
+                capabilities without being explicitly instructed to do so
+                (<a href="#experiment-2">experiment 2</a>).
+            </span>
+            <span id="ex3-hint">
+                <b>Regenerating</b> models were subject to pattern damages duiring
+                training, so their regenerative capabilities are much stronger,
+                especially in the central area. (<a href="#experiment-3">experiment 3</a>)
+
+            </span>
+        </div>
+
     </div>
 </div>
 
