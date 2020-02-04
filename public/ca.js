@@ -2,6 +2,7 @@
  * @fileoverview Description of this file.
  */
 
+const CHANNEL_N = 16;
 const MAX_ACTIVATION_VALUE = 10.0;
 
 const vs_code = `
@@ -74,8 +75,9 @@ const PROGRAMS = {
     uniform float u_brush;
 
     void main() {
-        vec2 xy = getOutputXY();
-        if (length(xy-u_pos+0.5)>=u_r) 
+        vec2 diff = abs(getOutputXY()-u_pos+0.5);
+        diff = min(diff, u_output.size-diff);
+        if (length(diff)>=u_r) 
           discard;
         vec4 result = vec4(0.0);
         if (u_brush>0.5) {
@@ -201,7 +203,9 @@ const PROGRAMS = {
             xy *= u_input.size;
             vec4 rgba = u_input_read(xy, 0.0);
             gl_FragColor = 1.0-rgba.a + rgba;
-            if (length(xy-u_lastDamage.xy) < u_lastDamage.z) {
+            vec2 diff = abs(xy-u_lastDamage.xy+0.5);
+            diff = min(diff, u_input.size-diff);
+            if (length(diff) < u_lastDamage.z) {
                 gl_FragColor.rgb *= 0.7;
                 gl_FragColor.rgb += vec3(0.3, 0.3, 0.0);
             }
@@ -300,7 +304,6 @@ export function createCA(gl, layerWeights, gridSize) {
     });
     
 
-    const CHANNEL_N = 16;
     let stateBuf = createTensor(gridW, gridH, CHANNEL_N);
     let newStateBuf = createTensor(gridW, gridH, CHANNEL_N);
     const perceptionBuf = createTensor(gridW, gridH, CHANNEL_N*3);

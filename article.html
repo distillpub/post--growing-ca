@@ -58,7 +58,7 @@
 <p>      state_grid, </p>
 <p>      gradient_x, </p>
 <p>      gradient_y, </p>
-<p>      axis=0)</p>
+<p>      axis=2)</p>
 
 <p>  return perception_grid</p>
 </d-code>
@@ -110,11 +110,13 @@
   </figcaption>
 </figure></p>
 
-<p>We are going to initialize the grid with zeros, except a single seed cell in the center, which will have all channels except RGB set to one. We set RGB channels to zeros because we want the seed point to be with $α<strong> \leq</strong> 0.1$ visible on the white background.</p>
+<p>We are going to initialize the grid with zeros, except a single seed cell in the center, which will have all channels except RGB set to one. We set RGB channels to zeros because we want the seed point to be with $α \leq 0.1$ visible on the white background.</p>
 
 <p>Once the grid is initialized, we can iteratively apply the update rule. We sample a random number of CA steps from the [64, 96] range for each training step, as we want the pattern to be stable across a number of iterations. This should be a sufficient number of steps to grow the pattern of the size we work with (40x40), even considering the stochastic nature of our update rule.</p>
 
 <p>At the last step we apply pixel-wise L2 loss between RGBA channels in the grid and the target pattern. This loss can be differentiably optimized with respect to the update rule parameters by backpropagation-over-time, the standard method of training recurrent neural networks.</p>
+
+<p>We observed training instabilities, that were manifesting themselves in sudden jumps of loss value in the later stages of the training. We managed to mitigate them by applying per-variable L2 normalization to parameter gradients. We think that this may have an effect similar to weight normalization <d-cite key="Salimans2016WeightNA"></d-cite>. Other training parameters are available in the accompanying source code.</p>
 
 <p>Once the optimisation converges, we can run simulations to see how our learned CA grows the butterfly, starting from the seed cell. Let’s see what happens when we run it for longer than the number of steps used during training. The animation below shows the behaviour of a few different models, trained to generate different emoji patterns.</p>
 
@@ -254,7 +256,10 @@ Rotating the axis along which the perception step computes gradients brings abou
 </p>
 
 <p>In a perfect world, not quantized by individual cells in a pixel-lattice, this would not be too surprising, as, after all, one would expect the perceived gradients in $\vec{x}$ and $\vec{y}$ to be invariant to the chosen angle - a simple change of frame of reference. However, it is important to note that things are not as simple in a pixel based model. Rotating pixel based graphics involves computing a mapping that’s not necessarily bijective and classically involves interpolating between pixels to achieve the desired result. This is because a single pixel, when rotated, will now likely overlap several pixels. The successful growth of patterns as above suggests a certain robustness to the underlying conditions outside of those experienced during training.</p>
-<h2 id='webgl-playground'>WebGL Playground</h2>
+<h2 id='implementation'>Implementation</h2>
+<h3>Colaboratory Notebook</h3>
+<p>All of the experiments, images and videos in this article can be recreated using this colaboratory. Images have a “Recreate in Colab” button which brings you to the corresponding cell that generated the image. Our reference implementation of the Neural CA was written striving to be as concise and simple as possible and thus foregoes many performance optimizations and tricks one could implement. For the core of the CA - the neural network parametrizing the update rule - the full code is contained in the tf.keras.Model NeuralCA class. Note that this network consists of just 8.3K parameters - minute by most standards and we suspect it could be minimized further employing pruning or other forms of compression. The update loop consists of a native python loop iteratively applying the aforementioned update function, and making use various techniques we’ve described in the article, such as having a sample pool and applying damage to the starting seeds. The rest of the notebook consists of code to generate and visualize the various images and videos employed in this article, utilizing models pre-trained by us using this very same colab. These pre-trained models can be easily recreated in a matter of minutes with a current generation GPU.</p>
+<h3>WebGL playground</h3>
 <p>Starting from our first experiments on Neural CA growth and regeneration, we wanted to challenge our models with new situations not seen during training, like removing large portions of the pattern, or seeding multiple instances side-by-side. To facilitate exploration and sharing of our models, we created a TensorFlow.js playground that allowed us to interact with trained models right in a browser. The code for exporting and loading CA models in TF.js format is available in the accompanying Colab notebook.</p>
 
 <p>Later during the work on this article, we decided to see how far we can push the performance and portability of this playground. We reimplemented all necessary operations from scratch using the WebGL API and GLSL shader language. This implementation powers the demo that can be found on the top of this page. We decided to quantize all model parameters and activations to 8-bit values, in order to maximize the performance and compatibility with mobile hardware.</p>
@@ -293,12 +298,11 @@ Rotating the axis along which the perception step computes gradients brings abou
 </d-article>
 <d-appendix>
 <h3>Acknowledgments</h3>
-<p>Bert Chan, Mark Sandler, Blaise, Andrew Jackson (proofreading), Damien</p>
-
+<p>We would like to thank Blaise Aguera y Arcas for his support, as well as for his shout out to our work in his 2019 talk in NeurIPS <d-cite key="SocialIntelligence"></d-cite>. We also thank Jyrki Alakuijala for his continuous support, especially for mentoring Ettore and putting him in contact with Alex. We thank Damien Henry… We thank Mark Sandler, Sean Silva and Bert Chan for their review of our early drafts, and Andrew Jackson for proofreading the text.</p>
 <h3>Author Contributions</h3>
 <p><strong>Research:</strong> The idea of applicability of neural networks for understanding regeneration and designing self-organising systems was proposed by Michael Levin in his email to Alex Mordvintsev, that was sent following the DeepDream <d-cite key="mordvintsev2015inceptionism"></d-cite> publication by Alex in 2015. The actual work was triggered by the talk <d-cite key="WhatBodiesThink"></d-cite> given by Michael at NeurIPS 2018, and the subsequent email exchange with him.</p>
 
-<p>Alex came up with the Self-Organizing Asynchronous Neural Cellular Automata model and supervised Ettore, who prototyped the model and designed the training regime forperformed the first versions of the experiments. Finally, Alex added some key contributions tosimplified, further improved the model and the training regime, and performed the final versions of the experiments, shown in the article.</p>
+<p>Alex came up with the Self-Organizing Asynchronous Neural Cellular Automata model and supervised Ettore, who prototyped the model and designed the training regime for the first versions of the experiments. Finally, Alex added some key contributions to the model and the training regime, and performed the final versions of the experiments, shown in the article.</p>
 
 <p><strong>Demos:</strong> Alex created both the WebGL and the tf.js demo. Ettore contributed to the tf.js demo.</p>
 
