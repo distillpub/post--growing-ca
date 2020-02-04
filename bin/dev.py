@@ -8,7 +8,13 @@ if six.PY3:
     from http.server import SimpleHTTPRequestHandler, test
 else:
     from SimpleHTTPServer import SimpleHTTPRequestHandler, test
-
+def write_file(fname, fout):
+    for s in open(fname):
+        if s.startswith('%% '):
+            fn = '../'+s.split()[1]
+            write_file(fn, fout)
+        else:
+            fout.write(s)
 
 def build():
     os.system('''
@@ -18,12 +24,7 @@ def build():
     fi
     ''')
     with open('index.html', 'w') as fout:
-        for s in open('../main.html'):
-            if s.startswith('%% '):
-                fn = '../'+s.split()[1]
-                fout.write(open(fn).read())
-            else:
-                fout.write(s)
+      write_file('../main.html', fout)
     print('build finished')
 
 
