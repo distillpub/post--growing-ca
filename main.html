@@ -107,41 +107,56 @@
       border-color: rgba(0, 0, 0, 0.2);
     }
     /* TOC */
-    #contents nav a {
+    d-contents {
+      grid-column-start: 2;
+      grid-column-end: 4;
+      padding-right: 0.25em;
+      border-right: 1px solid rgba(0, 0, 0, 0.1);
+      border-right-width: 1px;
+      border-right-style: solid;
+      border-right-color: rgba(0, 0, 0, 0.1);
+    } 
+
+    d-contents nav h3 {
+      margin-top: 0;
+      margin-bottom: 1em;
+    }
+
+    d-contents nav a {
       color: rgba(0, 0, 0, 0.8);
       border-bottom: none;
       text-decoration: none;
     }
 
-    #contents li {
+    d-contents li {
       list-style-type: none;
     }
 
-    #contents ul {
+    d-contents ul {
       padding-left: 1em;
     }
     
-    #contents nav ul li {
+    d-contents nav ul li {
       margin-bottom: .25em;
     }
 
-    #contents nav a:hover {
+    d-contents nav a:hover {
       text-decoration: underline solid rgba(0, 0, 0, 0.6);
     }
 
-    #contents nav ul {
+    d-contents nav ul {
       margin-top: 0;
       margin-bottom: 6px;
     }
 
 
-    #contents nav>div {
+    d-contents nav>div {
       display: block;
       outline: none;
       margin-bottom: 0.5em;
     }
 
-    #contents nav>div>a {
+    d-contents nav>div>a {
       font-size: 13px;
       font-weight: 600;
     }
@@ -162,22 +177,6 @@
 
 <d-byline></d-byline>
 
-  <div id="contents" class="base-grid" style="border-top: 1px solid #eee; padding: 1.5rem 0;">
-    <nav class="l-text toc figcaption">
-      <h3>Contents</h3>
-      <div><a href="#model">Model</a></div>
-      <div><a href="#experiment-1">Experiments</a></div>
-      <ul>
-        <li><a href="#experiment-1">Learning to Grow</a></li>
-        <li><a href="#experiment-2">What persists, exists</a></li>
-        <li><a href="#experiment-3">Learning to regenerate</a></li>
-        <li><a href="#experiment-4">Rotating the percceptive field</a></li>
-      </ul>
-      <div><a href="#webgl-playground">WebGL Playground</a></div>
-      <div><a href="#related-work">Related Work</a></div>
-      <div><a href="#discussion">Discussion</a></div>
-    </nav>
-  </div>
 
 %% article.html
 

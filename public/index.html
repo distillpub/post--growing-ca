@@ -107,41 +107,56 @@
       border-color: rgba(0, 0, 0, 0.2);
     }
     /* TOC */
-    #contents nav a {
+    d-contents {
+      grid-column-start: 2;
+      grid-column-end: 4;
+      padding-right: 0.25em;
+      border-right: 1px solid rgba(0, 0, 0, 0.1);
+      border-right-width: 1px;
+      border-right-style: solid;
+      border-right-color: rgba(0, 0, 0, 0.1);
+    } 
+
+    d-contents nav h3 {
+      margin-top: 0;
+      margin-bottom: 1em;
+    }
+
+    d-contents nav a {
       color: rgba(0, 0, 0, 0.8);
       border-bottom: none;
       text-decoration: none;
     }
 
-    #contents li {
+    d-contents li {
       list-style-type: none;
     }
 
-    #contents ul {
+    d-contents ul {
       padding-left: 1em;
     }
     
-    #contents nav ul li {
+    d-contents nav ul li {
       margin-bottom: .25em;
     }
 
-    #contents nav a:hover {
+    d-contents nav a:hover {
       text-decoration: underline solid rgba(0, 0, 0, 0.6);
     }
 
-    #contents nav ul {
+    d-contents nav ul {
       margin-top: 0;
       margin-bottom: 6px;
     }
 
 
-    #contents nav>div {
+    d-contents nav>div {
       display: block;
       outline: none;
       margin-bottom: 0.5em;
     }
 
-    #contents nav>div>a {
+    d-contents nav>div>a {
       font-size: 13px;
       font-weight: 600;
     }
@@ -178,7 +193,7 @@
     grid-template-rows: auto auto;
   }
   #demo-controls {
-    grid-row: 1/3;      
+    grid-row: 1/3;
   }
 }
 
@@ -332,24 +347,24 @@ input[type=range] {
 
 <d-byline></d-byline>
 
-  <div id="contents" class="base-grid" style="border-top: 1px solid #eee; padding: 1.5rem 0;">
-    <nav class="l-text toc figcaption">
-      <h3>Contents</h3>
-      <div><a href="#model">Model</a></div>
-      <div><a href="#experiment-1">Experiments</a></div>
-      <ul>
-        <li><a href="#experiment-1">Learning to Grow</a></li>
-        <li><a href="#experiment-2">What persists, exists</a></li>
-        <li><a href="#experiment-3">Learning to regenerate</a></li>
-        <li><a href="#experiment-4">Rotating the percceptive field</a></li>
-      </ul>
-      <div><a href="#webgl-playground">WebGL Playground</a></div>
-      <div><a href="#related-work">Related Work</a></div>
-      <div><a href="#discussion">Discussion</a></div>
-    </nav>
-  </div>
 
 <d-article>
+<d-contents>
+  <nav class="l-text toc figcaption">
+    <h3>Contents</h3>
+    <div><a href="#model">Model</a></div>
+    <div><a href="#experiment-1">Experiments</a></div>
+    <ul>
+      <li><a href="#experiment-1">Learning to Grow</a></li>
+      <li><a href="#experiment-2">What persists, exists</a></li>
+      <li><a href="#experiment-3">Learning to regenerate</a></li>
+      <li><a href="#experiment-4">Rotating the percceptive field</a></li>
+    </ul>
+    <div><a href="#webgl-playground">WebGL Playground</a></div>
+    <div><a href="#related-work">Related Work</a></div>
+    <div><a href="#discussion">Discussion</a></div>
+  </nav>
+</d-contents>
 <p>Most multicellular organisms begin their life as a single egg cell - a single cell whose progeny reliably self-assemble into highly complex anatomies with many organs and tissues in precisely the same arrangement each time. Being able to build their own bodies is probably the most fundamental skill every living creature possesses. Morphogenesis (the process of an organism’s shape development) is one of the most striking examples of self-organisation. Cells, the tiny building blocks of bodies, communicate with their neighbors to decide the shape of organs and body plans, where to grow each organ, how to interconnect them, and when to eventually stop. How complex bodies reliably form, and how cell activity stops when the exactly correct shape is complete, is an active area of research, trying to understand the interplay of the emergence of complex outcomes from simple rules and homeostatic loops that seek to reduce error (or distance from a correct Target Morphology) <d-cite key="PezzuloGiovanniLevin2016,C5IB00221D"></d-cite>. What is clear is that evolution has learned to exploit the laws of physics and computation to implement the highly robust morphogenetic software that runs on genome-encoded cellular hardware.</p>
 
 <p>This process is extremely robust to perturbations. Even when the organism is fully developed, some species still have the capability to repair damage - a process known as regeneration. Some creatures, such as salamanders, can fully regenerate vital organs, limbs, eyes, or even parts of the brain! Morphogenesis is a surprisingly adaptive process. Sometimes even a very atypical development process can result in a viable organism - for example, the parts of an early mammalian embryo cut into pieces will each form a complete individual - monozygotic twins! The biggest puzzle in this field is how the cell collective knows what to build and when to stop. The sciences of genomics and stem cell biology are only part of the puzzle, as they explain the distribution of specific components in each cell, and the establishment of different types of cells. While many genes are known that are <i>required</i> for the process of regeneration, we still do not know the algorithm <i>sufficient</i> for cells to know how to build or remodel complex organs to a very specific anatomical end-goal. Thus, one major lynch-pin of future biomedicine is the discovery of how large-scale anatomy is specified within cell collectives, and how we can rewrite this information to have rational control of growth and form. It is also becoming clear that the software of life possesses numerous modules or subroutines, such as “build an eye here”, which can be activated with simple signal triggers. Discovery of such subroutines and a mapping out of the developmental logic is a new field at the intersection of developmental biology and computer science. It is now essential to try to formulate computational models of this process, both to enrich the conceptual toolkit of biologists and to help translate the discoveries of biology into better robotics and computational technology.</p>
