@@ -203,6 +203,10 @@
         grid-column-end: 14; 
       }
     }
+    /* so title is on one line */
+    d-title h1 {
+      font-size: 45px;
+    }
 
   </style>
   <script>
@@ -529,11 +533,7 @@ input[type=range] {
 </figure></p>
 <p>In our first experiment, we simply train the CA to achieve a target image after a random number of updates. This approach is quite naive and will run into issues. But the challenges it surfaces will help us refine future attempts.</p>
 
-<p>We initialize the grid with zeros, except a single seed cell in the center, which will have all channels except RGB<d-footnote> We set RGB channels of the seed to zero because we want it to be visible on the white background.</d-footnote> set to one. Once the grid is initialized, we iteratively apply the update rule. We sample a random number of CA steps from the [64, 96] range for each training step, as we want the pattern to be stable across a number of iterations. This should be a sufficient number of steps to grow the pattern of the size we work with (40x40), even considering the stochastic nature of our update rule.</p>
-
-<p>At the last step we apply pixel-wise L2 loss between RGBA channels in the grid and the target pattern. This loss can be differentiably optimized with respect to the update rule parameters by backpropagation-through-time, the standard method of training recurrent neural networks.</p>
-
-<p>We observed training instabilities, that were manifesting themselves in sudden jumps of loss value in the later stages of the training. We managed to mitigate them by applying per-variable L2 normalization to parameter gradients. We think that this may have an effect similar to weight normalization <d-cite key="Salimans2016WeightNA"></d-cite>. Other training parameters are available in the accompanying source code.</p>
+<p>We initialize the grid with zeros, except a single seed cell in the center, which will have all channels except RGB<d-footnote> We set RGB channels of the seed to zero because we want it to be visible on the white background.</d-footnote> set to one. Once the grid is initialized, we iteratively apply the update rule. We sample a random number of CA steps from the [64, 96]<d-footnote> This should be a sufficient number of steps to grow the pattern of the size we work with (40x40), even considering the stochastic nature of our update rule.</d-footnote> range for each training step, as we want the pattern to be stable across a number of iterations. At the last step we apply pixel-wise L2 loss between RGBA channels in the grid and the target pattern. This loss can be differentiably optimized<d-footnote> We observed training instabilities, that were manifesting themselves as sudden jumps of the loss value in the later stages of the training. We managed to mitigate them by applying per-variable L2 normalization to parameter gradients. This may have the effect similar to the weight normalization <d-cite key="Salimans2016WeightNA"></d-cite>. Other training parameters are available in the accompanying source code.</d-footnote> with respect to the update rule parameters by backpropagation-through-time, the standard method of training recurrent neural networks.</p>
 
 <p>Once the optimisation converges, we can run simulations to see how our learned CAs grow patterns starting from the seed cell. Let’s see what happens when we run it for longer than the number of steps used during training. The animation below shows the behaviour of a few different models, trained to generate different emoji patterns.</p>
 
@@ -707,10 +707,6 @@ Rotating the axis along which the perception step computes gradients brings abou
 <p>Looking more broadly, we think that the concept of self-organisation is finding its way into mainstream machine learning with popularisation of Graph Neural Network <d-cite key="wu2019comprehensive"></d-cite> models. Typically, GNNs run a repeated computation across vertices of a (possibly dynamic) graph. Vertices communicate locally through graph edges, and aggregate global information required to perform the task over multiple rounds of message exchanges. As if atoms talk to each other to figure out properties of a molecule <d-cite key="NIPS2015_5954"></d-cite>, or points of the point cloud talk to their neighbors to figure out their global shape <d-cite key="Wang_2019"></d-cite>.</p>
 <h3>Swarm robotics</h3>
 <p>One of the most remarkable demonstrations of the power of self-organisation is when it is applied to swarm modeling. Back in 1987, Reynolds’ Boids <d-cite key="boids"></d-cite> virtually simulated the flocking behaviour of birds with just a tiny set of handcrafted rules. Nowadays, we can embed tiny robots with programs and test their collective behavior on physical agents, as demonstrated by work such as Mergeable Nervous Systems <d-cite key="mathews2017mergeable"></d-cite> and Kilobots <d-cite key="kilobots"></d-cite>. To the best of our knowledge, programs embedded into swarm robots are currently designed by humans. We hope this article can be an inspiration for the field, and encourage the designing of collective behaviors through differentiable modeling.</p>
-
-<p>Cite:</p>
-<p>Boids, <u>https://www.nature.com/articles/s41467-017-00109-2#MOESM2</u>, <u>kilobots</u></p>
-
 <h3>Biological background</h3>
 <p>Biological phenomena such as embryogenesis and regeneration were among the main inspiration sources for this work. There exists a large body of literature trying to understand underlying mechanisms, reverse engineer and control these processes.</p>
 <p><!--</p>
