@@ -8,6 +8,7 @@ if six.PY3:
     from http.server import SimpleHTTPRequestHandler, test
 else:
     from SimpleHTTPServer import SimpleHTTPRequestHandler, test
+
 def write_file(fname, fout):
     for s in open(fname):
         if s.startswith('%% '):
@@ -41,5 +42,3 @@ if __name__ == '__main__':
     os.chdir('public')
     build()
     test(HandlerClass=Handler)
-    
-
