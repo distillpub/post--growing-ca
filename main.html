@@ -41,8 +41,6 @@
           "author": "Michael Levin",
           "authorURL": "http://www.drmichaellevin.org",
           "affiliation": "Allen Discovery Center at Tufts University",
-          "affiliationURL": "http://allencenter.tufts.edu"
-        }
       ],
       "katex": {
         "delimiters": [
@@ -106,16 +104,49 @@
       background: white;
       border-color: rgba(0, 0, 0, 0.2);
     }
+
     /* TOC */
-    d-contents {
-      grid-column-start: 2;
-      grid-column-end: 4;
-      padding-right: 0.25em;
-      border-right: 1px solid rgba(0, 0, 0, 0.1);
-      border-right-width: 1px;
-      border-right-style: solid;
-      border-right-color: rgba(0, 0, 0, 0.1);
+    @media(max-width: 1000px){
+      d-contents {
+        grid-column-start: 2;
+        grid-column-end: 6;
+        padding-bottom: 0.5em;
+        margin-bottom: 1em;
+        padding-left: 0.25em;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        border-bottom-width: 1px;
+        border-bottom-style: solid;
+        border-bottom-color: rgba(0, 0, 0, 0.1);
+      }
     } 
+    
+    @media (min-width: 1000px){
+      d-contents {
+        grid-column-start: 1;
+        grid-column-end: 4;
+        justify-self: end;
+        padding-right: 3em;
+        padding-left: 2em;
+        border-right: 1px solid rgba(0, 0, 0, 0.1);
+        border-right-width: 1px;
+        border-right-style: solid;
+        border-right-color: rgba(0, 0, 0, 0.1);
+      }
+    }
+
+    @media (min-width: 1180px){
+      d-contents {
+        grid-column-start: 1;
+        grid-column-end: 4;
+        justify-self: end;
+        padding-right: 3em;
+        padding-left: 2em;
+        border-right: 1px solid rgba(0, 0, 0, 0.1);
+        border-right-width: 1px;
+        border-right-style: solid;
+        border-right-color: rgba(0, 0, 0, 0.1);
+      }
+    }
 
     d-contents nav h3 {
       margin-top: 0;
