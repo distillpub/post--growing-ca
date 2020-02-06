@@ -47,25 +47,13 @@
 <p>  sobel_y = transpose(sobel_x)</p>
 <p>  # Convolve sobel filters with states</p>
 <p>  # in x, y and channel dimension.</p>
-<<<<<<< Updated upstream
 <p>  grad_x = conv2d(sobel_x, state_grid)</p>
 <p>  grad_y = conv2d(sobel_y, state_grid)</p>
-=======
-<p>  gradient_x = conv2d(sobel_x, state_grid)</p>
-<p>  gradient_y = conv2d(sobel_y, state_grid)</p>
->>>>>>> Stashed changes
 <p>  # Concatenate the cell's state channels, </p>
 <p>  # the gradients of channels in x and </p>
 <p>  # the gradient of channels in y. </p>
 <p>  perception_grid = concat(</p>
-<<<<<<< Updated upstream
 <p>      state_grid, grad_x, grad_y,  axis=2)</p>
-=======
-<p>      state_grid, </p>
-<p>      gradient_x, </p>
-<p>      gradient_y, </p>
-<p>      axis=2)</p>
->>>>>>> Stashed changes
 <p>  return perception_grid</p>
 </d-code>
 
