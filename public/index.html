@@ -197,15 +197,16 @@
       font-weight: 600;
     }
     /* code blocks to margins */
-    @media (min-width: 1700px) {
+    @media (min-width: 1600px) {
       d-code {
+        margin-top: -10px;
         grid-column-start: 12;
         grid-column-end: 14; 
       }
     }
     /* so title is on one line */
-    d-title h1 {
-      font-size: 45px;
+    d-title h1, d-title p {
+      grid-column: middle;
     }
 
   </style>
@@ -213,7 +214,7 @@
   // hack to edit font size in code snippets. guaranteed a better way to do 
   // this, but I'm not a webdev
   window.onload = function() {
-    document.querySelectorAll("d-code").forEach(function(e) {e.shadowRoot.querySelector('#code-container').style.fontSize = "0.8em"});
+    document.querySelectorAll("d-code").forEach(function(e) {e.shadowRoot.querySelector('#code-container').style.fontSize = "0.7em"});
   }
   </script>
   <d-title>
@@ -456,23 +457,18 @@ input[type=range] {
 <h3>Cellular Automaton rule</h3>
 <p>Now it’s time to define the update rule. Our CA runs on a regular 2D grid of 16-dimensional vectors, essentially a 3D array of shape [height, width, 16]. We want to apply the same operation to each cell, and the result of this operation can only depend on the small (3x3) neighborhood of the cell. This is heavily reminiscent of the convolution operation, one of the cornerstones of signal processing and differential programming. Convolution is a linear operation, but it can be combined with other per-cell operations to produce a complex update rule, capable of learning the desired behaviour. Our cell update rule can be split into the following phases, applied in order:</p>
 
-<ul><li><strong>Perception.</strong> This step defines what each cell perceives of the environment surrounding it. We implement this via a 3x3 convolution with a fixed kernel. One may argue that defining this kernel is superfluous - after all we could simply have the cell learn the requisite perception kernel coefficients. Our choice of fixed operations are motivated by the fact that real life cells often rely only on chemical gradients to guide the organism development. Thus, we are using classical Sobel filters to estimate the partial derivatives of cell state channels in the $\vec{x}$ and $\vec{y}$ directions, forming a 2D gradient vector in each direction, for each state channel. We concatenate those gradients with the cells own states, forming a $16*2+16=48$ dimensional <i>perception vector</i>, or rather <i>percepted vector, </i>for each cell.</li></ul>
+<p><strong>Perception.</strong> This step defines what each cell perceives of the environment surrounding it. We implement this via a 3x3 convolution with a fixed kernel. One may argue that defining this kernel is superfluous - after all we could simply have the cell learn the requisite perception kernel coefficients. Our choice of fixed operations are motivated by the fact that real life cells often rely only on chemical gradients to guide the organism development. Thus, we are using classical Sobel filters to estimate the partial derivatives of cell state channels in the $\vec{x}$ and $\vec{y}$ directions, forming a 2D gradient vector in each direction, for each state channel. We concatenate those gradients with the cells own states, forming a $16*2+16=48$ dimensional <i>perception vector</i>, or rather <i>percepted vector, </i>for each cell.</p>
 
 <d-code block="" language="python">
 <p>def perceive(state_grid):</p>
-<p>  # Define the Sobel filters.</p>
 <p>  sobel_x = [[-1, 0, +1],</p>
 <p>             [-2, 0, +2],</p>
 <p>             [-1, 0, +1]]</p>
 <p>  sobel_y = transpose(sobel_x)</p>
-
-<p>  # Convolve the Sobel filters </p>
-<p>  # with the current states. </p>
-<p>  # The convolution occurs in </p>
-<p>  # the x, y and channel dimension.</p>
+<p>  # Convolve sobel filters with states</p>
+<p>  # in x, y and channel dimension.</p>
 <p>  gradient_x = conv2d(sobel_x, state_grid)</p>
 <p>  gradient_y = conv2d(sobel_y, state_grid)</p>
-<p>  </p>
 <p>  # Concatenate the cell's state channels, </p>
 <p>  # the gradients of channels in x and </p>
 <p>  # the gradient of channels in y. </p>
@@ -481,11 +477,10 @@ input[type=range] {
 <p>      gradient_x, </p>
 <p>      gradient_y, </p>
 <p>      axis=2)</p>
-
 <p>  return perception_grid</p>
 </d-code>
 
-<ul><li><strong>Update rule.</strong> Each cell now applies a series of operations to the perception vector, consisting of typical differentiable programming building blocks, such as 1x1-convolutions and ReLU nonlinearities, which we call the cell’s “update rule”. Recall that the update rule is learned, but every cell runs the same update rule. The network parametrizing this update rule consists of approximately 8,000 parameters. Inspired by residual neural networks, the update rule outputs an incremental update to the cell’s state, which applied to the cell before the next time step. The update rule is designed to exhibit “do-nothing” initial behaviour - implemented by initializing the weights of the final convolutional layer in the update rule with zero. We also forego applying a ReLU to the output of the last layer of the update rule as the incremental updates to the cell state must necessarily be able to both add or subtract from the state.</li></ul>
+<p><strong>Update rule.</strong> Each cell now applies a series of operations to the perception vector, consisting of typical differentiable programming building blocks, such as 1x1-convolutions and ReLU nonlinearities, which we call the cell’s “update rule”. Recall that the update rule is learned, but every cell runs the same update rule. The network parametrizing this update rule consists of approximately 8,000 parameters. Inspired by residual neural networks, the update rule outputs an incremental update to the cell’s state, which applied to the cell before the next time step. The update rule is designed to exhibit “do-nothing” initial behaviour - implemented by initializing the weights of the final convolutional layer in the update rule with zero. We also forego applying a ReLU to the output of the last layer of the update rule as the incremental updates to the cell state must necessarily be able to both add or subtract from the state.</p>
 
 <d-code block="" language="python">
 <p># The following pseudocode operates on</p>
@@ -500,7 +495,7 @@ input[type=range] {
 </d-code>
 
 
-<ul><li><strong>Stochastic cell update.</strong> Typical cellular automata update all cells simultaneously. This implies the existence of a global clock, synchronizing all cells. Relying on global synchronisation is not something one expects from a self-organising system. We relax this requirement by assuming that each cell performs an update independently, waiting for a random time interval between updates. To model this behaviour we apply a random per-cell mask to update vectors, setting all update values to zero with some predefined probability (we use 0.5 during training). This operation can be also seen as an application of per-cell dropout to update vectors.</li></ul>
+<p><strong>Stochastic cell update.</strong> Typical cellular automata update all cells simultaneously. This implies the existence of a global clock, synchronizing all cells. Relying on global synchronisation is not something one expects from a self-organising system. We relax this requirement by assuming that each cell performs an update independently, waiting for a random time interval between updates. To model this behaviour we apply a random per-cell mask to update vectors, setting all update values to zero with some predefined probability (we use 0.5 during training). This operation can be also seen as an application of per-cell dropout to update vectors.</p>
 
 <d-code block="" language="python">
 <p>def stochastic_update(state_grid, dy_grid):</p>
@@ -510,7 +505,7 @@ input[type=range] {
 <p>  return state_grid + ds_grid</p>
 </d-code>
 
-<ul><li><strong>Living cell masking.</strong> We want to model the growth process that starts with a single cell, and don’t want empty cells to participate in computations or carry any hidden state. We enforce this by explicitly setting all channels of empty cells to zeros. A cell is considered empty if there is no “mature” (alpha>0.1) cell in its 3x3 neightborhood.</li></ul>
+<p><strong>Living cell masking.</strong> We want to model the growth process that starts with a single cell, and don’t want empty cells to participate in computations or carry any hidden state. We enforce this by explicitly setting all channels of empty cells to zeros. A cell is considered empty if there is no “mature” (alpha>0.1) cell in its 3x3 neightborhood.</p>
 
 <d-code block="" language="python">
 <p>def alive_masking(state_grid):</p>
@@ -527,9 +522,9 @@ input[type=range] {
 <h2 id='experiment-1'>Experiment 1: Learning to Grow</h2>
 <p><figure style="margin-left:auto; margin-right: auto; grid-column:page; width:100%; max-width:900px;">
   <object data="figures/training.svg" type="image/svg+xml" style="width:100%"></object>
-  <figcaption>
+  <!-- <figcaption>
   An illustration of the training algorithm. <span style="color:#e6ae87; font-weight: bold">Orange arrows</span> denote gradient flow. <span style="color:#666666; font-weight: bold">Dark grey arrows</span> denote forward pass flow.
-  </figcaption>
+  </figcaption> -->
 </figure></p>
 <p>In our first experiment, we simply train the CA to achieve a target image after a random number of updates. This approach is quite naive and will run into issues. But the challenges it surfaces will help us refine future attempts.</p>
 
@@ -557,7 +552,6 @@ input[type=range] {
 <p>One strategy to solve this is letting the CA iterate for much a longer time and periodically applying the loss against the target, training the system by backpropagation through these longer time intervals. Intuitively we claim that with longer the time intervals and several applications of loss, the model is more likely to create an attractor for the target shape. However, longer time periods substantially increase the training time and more importantly, the memory requirements, given that the entire episode’s intermediate activations must be stored in memory for a backwards-pass to occur.</p>
 
 <p>Instead, we propose a “sample pool” based strategy to a similar effect. We define a pool of seed states to start the iterations from, initially filled with the single black pixel seed state. We then sample a batch from this pool which we use in our training step. To prevent the equivalent of “catastrophic forgetting” we replace one sample in this batch with the original, single-pixel seed state. After concluding the training step , we replace samples in the pool that were sampled for the batch with the output states from the training step over this batch. The animation below shows a random sample of the entries in the pool every 20 training steps.</p>
-
 <d-code block="" language="python">
 <p>def pool_training():</p>
 <p>  # Set alpha and hidden channels to (1.0).</p>
@@ -576,7 +570,6 @@ input[type=range] {
 <p>    # Place outputs back in the pool.</p>
 <p>    pool[idxs] = outputs </p>
 </d-code>
-
 
 <p><figure>
      <video loop autoplay playsinline muted>
@@ -675,7 +668,7 @@ Rotating the axis along which the perception step computes gradients brings abou
 <p>In a perfect world, not quantized by individual cells in a pixel-lattice, this would not be too surprising, as, after all, one would expect the perceived gradients in $\vec{x}$ and $\vec{y}$ to be invariant to the chosen angle - a simple change of frame of reference. However, it is important to note that things are not as simple in a pixel based model. Rotating pixel based graphics involves computing a mapping that’s not necessarily bijective and classically involves interpolating between pixels to achieve the desired result. This is because a single pixel, when rotated, will now likely overlap several pixels. The successful growth of patterns as above suggests a certain robustness to the underlying conditions outside of those experienced during training.</p>
 <h2 id='implementation'>Implementation</h2>
 <h3>Colaboratory Notebook</h3>
-<p>All of the experiments, images and videos in this article can be recreated using this colaboratory. Images have a “Recreate in Colab” button which brings you to the corresponding cell that generated the image. Our reference implementation of the Neural CA was written striving to be as concise and simple as possible and thus foregoes many performance optimizations and tricks one could implement. For the core of the CA - the neural network parametrizing the update rule - the full code is contained in the tf.keras.Model NeuralCA class. Note that this network consists of just 8.3K parameters - minute by most standards and we suspect it could be minimized further employing pruning or other forms of compression. The update loop consists of a native python loop iteratively applying the aforementioned update function, and making use various techniques we’ve described in the article, such as having a sample pool and applying damage to the starting seeds. The rest of the notebook consists of code to generate and visualize the various images and videos employed in this article, utilizing models pre-trained by us using this very same colab. These pre-trained models can be easily recreated in a matter of minutes with a current generation GPU.</p>
+<p>All of the experiments, images and videos in this article can be recreated using this colaboratory. Images have a “Recreate in Colab” button which brings you to the corresponding cell that generated the image. Our reference implementation of the Neural CA was written striving to be as concise and simple as possible and thus foregoes many performance optimizations and tricks one could implement. For the core of the CA - the neural network parametrizing the update rule - the full code is contained in the tf.keras.Model NeuralCA class. Note that this network consists of just 8.3K parameters - minute by most standards and we suspect it could be minimized further employing pruning or other forms of compression. The update loop consists of a native python loop iteratively applying the aforementioned update function, and making use of various techniques we’ve described in the article, such as having a sample pool and applying damage to the starting seeds. The rest of the notebook consists of code to generate and visualize the various images and videos employed in this article, utilizing models pre-trained by us using this very same colab. These pre-trained models can be easily recreated in a matter of minutes with a current generation GPU.</p>
 <h3>WebGL playground</h3>
 <p>Starting from our first experiments on Neural CA growth and regeneration, we wanted to challenge our models with new situations not seen during training, like removing large portions of the pattern, or seeding multiple instances side-by-side. To facilitate exploration and sharing of our models, we created a TensorFlow.js playground that allowed us to interact with trained models right in a browser. The code for exporting and loading CA models in TF.js format is available in the accompanying Colab notebook.</p>
 
