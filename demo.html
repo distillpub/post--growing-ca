@@ -70,19 +70,14 @@
     line-height: 1.4em;
 }
 #demo-tip{
-    color: rgba(0, 0, 0, 0.6);
     display: grid;
     grid-template-columns: 40px auto;
     align-items: center;
     column-gap: 10px;
-    line-height: 1.4em;
     margin-bottom: 20px;
 }
 #pointer {
     width: 40px;
-}
-input[type=range] {
-    width: 90%;
 }
 #status {
     font-size: 12px;
@@ -92,11 +87,120 @@ input[type=range] {
 #model-hints {
     color: rgba(0, 0, 0, 0.6);
     grid-column: 1/3;
-    line-height: 1.4em;
-    user-select: text;
 }
 #model-hints span {
     display: none;
+}
+.hint {
+    color: rgba(0, 0, 0, 0.6);
+    line-height: 1.4em;
+    user-select: text;
+}
+
+input[type=range] {
+  -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
+  width: 100%; /* Specific width is required for Firefox. */
+  background: transparent; /* Otherwise white in Chrome */
+  margin-bottom: 8px;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+}
+
+input[type=range]:focus {
+  outline: none; /* Removes the blue border. You should probably do some kind of focus styling for accessibility reasons though. */
+}
+
+input[type=range]::-ms-track {
+  width: 100%;
+  cursor: pointer;
+
+  /* Hides the slider so custom styles can be added */
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+
+/* Thumb */
+
+/* Special styling for WebKit/Blink */
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background: steelblue;
+  cursor: pointer;
+  margin-top: -6px; /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
+}
+
+/* All the same stuff for Firefox */
+input[type=range]::-moz-range-thumb {
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background: steelblue;
+  cursor: pointer;
+  border: none;
+}
+
+/* All the same stuff for IE */
+input[type=range]::-ms-thumb {
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background: grey;
+  cursor: pointer;
+}
+
+/* Track */
+
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  border: none;
+}
+
+input[type=range]:focus::-webkit-slider-runnable-track {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  border: none;
+}
+
+input[type=range]::-ms-track {
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  border: none;
+}
+input[type=range]::-ms-fill-lower {
+  background: rgba(0, 0, 0, 0.1);
+}
+input[type=range]:focus::-ms-fill-lower {
+  background: rgba(0, 0, 0, 0.1);
+}
+input[type=range]::-ms-fill-upper {
+  background: rgba(0, 0, 0, 0.1);
+}
+input[type=range]:focus::-ms-fill-upper {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+input[type="radio"] {
+    background-color: steelblue;
 }
 
 </style>
@@ -107,7 +211,7 @@ input[type=range] {
 
     <div id="demo-tip">
             <img id="pointer" src="images/pointer.svg">
-            <div>
+            <div class="hint">
                 Click or tap the image to erase the part of the pattern and see it regenerate.
                 Double clicking places a new seed cell on the grid.                
             </div>
@@ -140,8 +244,9 @@ input[type=range] {
         <div>
             Rotation <span id="rotationLabel"></span><br>
             <input type="range" id="rotation" min="0" max="360" step="1" value="0"><br>
+            <div class="hint" style="text-align: center;">(<a href="#experiment-4">experiment 4)</a></div>
         </div>
-        <div id='model-hints'>
+        <div id='model-hints' class="hint">
             <span id="ex1-hint">
                 <b>Growing</b> models were trained to generate patterns, 
                 but don't know how to persist them. Some patterns explode, some decay,
