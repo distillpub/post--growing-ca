@@ -109,7 +109,7 @@
 
 
 <p><figure>
-    <video loop autoplay playsinline muted>
+    <video loop autoplay playsinline muted width="640px">
       <source src="figures/unstable.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
@@ -248,7 +248,7 @@ Rotating the axis along which the perception step computes gradients brings abou
 <p>Later during the work on this article, we decided to see how far one can push the performance and portability of this interactive playground. We reimplemented all necessary operations from scratch using the WebGL API and GLSL shader language. This implementation powers the demo that can be found on the top of this page. We decided to quantize all model parameters and activations<d-footnote> We noticed that our models are more sensitive to the accuracy of small magnitude activation values, rather than the large ones. That’s why we use the non-linear $\arctan$ function to compress the unbounded activation values to the bounded segment, preserving the highest accuracy around zero.</d-footnote> to 8-bit values, in order to maximize the performance and compatibility with mobile hardware.</p>
 
 <p>The quantization was largely an afterthought, that was not accounted for during training. That’s why there are slight differences in models’ behaviours between the online demo and the Python version. However, most of the CAs that we’ve trained managed to survive the somewhat draconic quantization without severe artifacts, although in a few cases we had to resort to selecting the best model checkpoint between a few training runs.</p>
-<h2 id='related-work'>Related work</h2>
+<h2 id='related-work'>Related Work</h2>
 <h3>CA and PDEs</h3>
 <p>There exists a giant body of literature that describes various flavours of cellular automata and PDE systems, and their applications to modelling physical, biological or even social systems. Although it would be impossible to present a just overview of this field in a few lines, we will describe some prominent examples that inspired this work. Alan Turing introduced his famous Turing patterns back in 1952 <d-cite key="turing1990chemical"></d-cite>, suggesting how reaction-diffusion systems can be a valid model for chemical behaviors during morphogenesis. A particularly inspiring reaction-diffusion model that stood the test of time is the Gray-Scott model <d-cite key="Pearson189"></d-cite>, which shows an extreme variety of behaviors controlled by just a few variables.</p>
 
@@ -298,7 +298,9 @@ Rotating the axis along which the perception step computes gradients brings abou
 </d-article>
 <d-appendix>
 <h3>Acknowledgments</h3>
-<p>We would like to thank Blaise Aguera y Arcas for his support, as well as for teasing our work in his excellent 2019 talk at NeurIPS <d-cite key="SocialIntelligence"></d-cite>. We also thank Jyrki Alakuijala for his continuous support. We thank Damien Henry… We thank Mark Sandler, Sean Silva and Bert Chan for their review of our early drafts, and Andrew Jackson for proofreading the text.</p>
+<p>We would like to thank Blaise Aguera y Arcas for his support, as well as for teasing our work in his excellent 2019 talk at NeurIPS <d-cite key="SocialIntelligence"></d-cite>. We also thank Jyrki Alakuijala for his continuous support. We thank Damien Henry, Mark Sandler, Sean Silva and Bert Chan for their review of our early drafts, and Andrew Jackson for proofreading the text.</p>
+
+<p>On the Distill side, we are especially grateful to Chris Olah for reviewing the article draft, insightful comments on text and diagrams, and general support of the publication.</p>
 <h3>Author Contributions</h3>
 <p><strong>Research:</strong> The idea of applicability of neural networks for understanding regeneration and designing self-organising systems was proposed by Michael Levin in his email to Alex Mordvintsev, that was sent following the DeepDream <d-cite key="mordvintsev2015inceptionism"></d-cite> publication by Alex in 2015. The actual work was triggered by the talk <d-cite key="WhatBodiesThink"></d-cite> given by Michael at NeurIPS 2018, and the subsequent email exchange with him.</p>
 
@@ -307,7 +309,6 @@ Rotating the axis along which the perception step computes gradients brings abou
 <p><strong>Demos:</strong> Alex created both the WebGL and the tf.js demo. Ettore contributed to the tf.js demo.</p>
 
 <p><strong>Writing & Diagrams:</strong> Alex outlined the structure of the article, and contributed to the content throughout. Ettore contributed to the content throughout. Eyvind drew all the diagrams, contributed to the content throughout, and wrote all of the pseudocode. Michael made extensive contributions to the article text, providing the biological context and motivation for this work.</p>
-<!-- References -->
 <d-footnote-list></d-footnote-list>
 <d-citation-list></d-citation-list>
 <d-appendix>
