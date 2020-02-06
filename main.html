@@ -197,7 +197,7 @@
       font-weight: 600;
     }
     /* code blocks to margins */
-    @media (min-width: 1700px) {
+    @media (min-width: 1600px) {
       d-code {
         grid-column-start: 12;
         grid-column-end: 14; 
@@ -213,7 +213,7 @@
   // hack to edit font size in code snippets. guaranteed a better way to do 
   // this, but I'm not a webdev
   window.onload = function() {
-    document.querySelectorAll("d-code").forEach(function(e) {e.shadowRoot.querySelector('#code-container').style.fontSize = "0.8em"});
+    document.querySelectorAll("d-code").forEach(function(e) {e.shadowRoot.querySelector('#code-container').style.fontSize = "0.7em"});
   }
   </script>
   <d-title>
