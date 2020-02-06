@@ -298,19 +298,14 @@
     line-height: 1.4em;
 }
 #demo-tip{
-    color: rgba(0, 0, 0, 0.6);
     display: grid;
     grid-template-columns: 40px auto;
     align-items: center;
     column-gap: 10px;
-    line-height: 1.4em;
     margin-bottom: 20px;
 }
 #pointer {
     width: 40px;
-}
-input[type=range] {
-    width: 90%;
 }
 #status {
     font-size: 12px;
@@ -320,11 +315,120 @@ input[type=range] {
 #model-hints {
     color: rgba(0, 0, 0, 0.6);
     grid-column: 1/3;
-    line-height: 1.4em;
-    user-select: text;
 }
 #model-hints span {
     display: none;
+}
+.hint {
+    color: rgba(0, 0, 0, 0.6);
+    line-height: 1.4em;
+    user-select: text;
+}
+
+input[type=range] {
+  -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
+  width: 100%; /* Specific width is required for Firefox. */
+  background: transparent; /* Otherwise white in Chrome */
+  margin-bottom: 8px;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+}
+
+input[type=range]:focus {
+  outline: none; /* Removes the blue border. You should probably do some kind of focus styling for accessibility reasons though. */
+}
+
+input[type=range]::-ms-track {
+  width: 100%;
+  cursor: pointer;
+
+  /* Hides the slider so custom styles can be added */
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+
+/* Thumb */
+
+/* Special styling for WebKit/Blink */
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background: steelblue;
+  cursor: pointer;
+  margin-top: -6px; /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
+}
+
+/* All the same stuff for Firefox */
+input[type=range]::-moz-range-thumb {
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background: steelblue;
+  cursor: pointer;
+  border: none;
+}
+
+/* All the same stuff for IE */
+input[type=range]::-ms-thumb {
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background: grey;
+  cursor: pointer;
+}
+
+/* Track */
+
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  border: none;
+}
+
+input[type=range]:focus::-webkit-slider-runnable-track {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  border: none;
+}
+
+input[type=range]::-ms-track {
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  border: none;
+}
+input[type=range]::-ms-fill-lower {
+  background: rgba(0, 0, 0, 0.1);
+}
+input[type=range]:focus::-ms-fill-lower {
+  background: rgba(0, 0, 0, 0.1);
+}
+input[type=range]::-ms-fill-upper {
+  background: rgba(0, 0, 0, 0.1);
+}
+input[type=range]:focus::-ms-fill-upper {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+input[type="radio"] {
+    background-color: steelblue;
 }
 
 </style>
@@ -335,7 +439,7 @@ input[type=range] {
 
     <div id="demo-tip">
             <img id="pointer" src="images/pointer.svg">
-            <div>
+            <div class="hint">
                 Click or tap the image to erase the part of the pattern and see it regenerate.
                 Double clicking places a new seed cell on the grid.                
             </div>
@@ -368,8 +472,9 @@ input[type=range] {
         <div>
             Rotation <span id="rotationLabel"></span><br>
             <input type="range" id="rotation" min="0" max="360" step="1" value="0"><br>
+            <div class="hint" style="text-align: center;">(<a href="#experiment-4">experiment 4)</a></div>
         </div>
-        <div id='model-hints'>
+        <div id='model-hints' class="hint">
             <span id="ex1-hint">
                 <b>Growing</b> models were trained to generate patterns, 
                 but don't know how to persist them. Some patterns explode, some decay,
@@ -428,14 +533,13 @@ input[type=range] {
 
 <p>Imagine if we could design systems of such plasticity and robustness: structures and machines that could grow and repair themselves. This information would transform the current efforts in regenerative medicine, where scientists and clinicians seek to discover the inputs or stimuli that could cause cells in the body to build structures on demand as needed. To help crack the puzzle of the morphogenetic code, and also exploit the insights of biology to create self-repairing systems in real life, we try to replicate some of the desired properties in an <i>in silico</i> experiment.</p>
 
-<p>The idea of modelling large-scale phenomena by simulating tiny local interactions found its way into engineering and scientific practice in the form of systems of partial derivative equation (PDEs), particle systems, and various kinds of Cellular Automata.</p>
-
-<p>We will focus on Cellular Automata (CA) models, as a roadmap for the effort of identifying cell-level rules which give rise to complex, regenerative behavior of the collective. These typically consist of a grid of cells being iteratively updated, with the same set of rules being applied to each cell at every step. The new state of a cell depends only on the states of cells in its tiny neighborhood. Despite the apparent simplicity, CAs often demonstrate rich, interesting behaviours, and have a long history of being applied to biological phenomena modeling.</p>
+<h2 id='model'>Model</h2>
+<p>Engineering and science use many kinds of simulations through local interaction, including systems of partial derivative equation (PDEs), particle systems, and various kinds of Cellular Automata (CA). We will focus on Cellular Automata models, as a roadmap for the effort of identifying cell-level rules which give rise to complex, regenerative behavior of the collective. CA typically consists of a grid of cells being iteratively updated, with the same set of rules being applied to each cell at every step. The new state of a cell depends only on the states of cells in its tiny neighborhood. Despite the apparent simplicity, CAs often demonstrate rich, interesting behaviours, and have a long history of being applied to biological phenomena modeling.</p>
 
 <p>Let’s try to develop a cellular automata update rule that, starting from a single cell, will produce a predefined multicellular pattern on a 2D grid. This is our analogous toy model of organism development. To design the CA, we must specify the possible cell states, and their update function. Typical CA models represent cell states with a set of discrete values, although variants using vectors of continuous values exist. The use of continuous values has the virtue of allowing the update rule to be a differentiable function of a cell’s neighbourhood state. The rules that guide individual cell behavior based on the local environment are analogous to the low-level hardware specification encoded by the genome of an organism. Running our model for a set amount of steps from a starting configuration will reveal the patterning behavior that is enabled by such hardware.</p>
 
 <p>So - what is so special about differentiable update rules? They will allow us to use the powerful language of loss functions to express our wishes, and the extensive existing machinery around gradient-based numerical optimization to fulfill them. The art of stacking together differentiable functions, and optimizing their parameters to perform various tasks has a long history. In recent years it has flourished under various names, such as (Deep) Neural Networks, Deep Learning or Differentiable Programming.</p>
-<h2 id='model'>Model</h2>
+
 <p><figure style="margin-left:auto; margin-right: auto; grid-column:page; width:100%; max-width:2000px;">
   <object data="figures/model.svg" type="image/svg+xml" style="width:100%"></object>
   <figcaption style="">
@@ -542,11 +646,9 @@ input[type=range] {
 
 <p>We can see that different training runs can lead to models with drastically different long term behaviours. Some tend to die out, some don’t seem to know how to stop growing, but some happen to be almost stable! How can we steer the training towards producing persistent patterns all the time?</p>
 <h2 id='experiment-2'>Experiment 2: What persists, exists</h2>
-<p>One way of understanding why the previous experiment was unstable is to draw a parallel to dynamical systems. We can consider every cell to be a dynamical system, with each cell sharing the same dynamics, and all cells being locally coupled amongst themselves. When we train our cell update model - we are adjusting these dynamics. Our goal is to find dynamics for the cell such that the target pattern is not only an attractor but also a fixed-point of the the overall coupled system. </p>
+<p>One way of understanding why the previous experiment was unstable is to draw a parallel to dynamical systems. We can consider every cell to be a dynamical system, with each cell sharing the same dynamics, and all cells being locally coupled amongst themselves. When we train our cell update model - we are adjusting these dynamics. Our goal is to find dynamics that satisfy a number of properties. Initially, we wanted the system to evolve from the seed pattern to the target pattern - a trajectory which we achieved in Experiment 1. Now, we want to avoid the instability we observed - which in our dynamical system metaphor consists of making the target pattern an attractor. </p>
 
-<p>Our first experiment encouraged the dynamics of the coupled system to evolve in such a way as to reach the target pattern in about 64 to 96 steps, starting from a single black pixel (the seed). This likely defines an attractor acting only over the space of states visited between the seed and the target pattern. However we have not explicitly influenced the dynamics of the CA for the states it experiences shortly after 96 steps - thus it is likely the target pattern at this point is not a fixed point and that the dynamics result in a divergence from the target pattern.</p>
-
-<p>One strategy to solve this is letting the CA iterate for much a longer time and periodically applying the loss against the target, training the system by backpropagation through these longer time intervals. Intuitively we claim that with longer the time intervals and several applications of loss, the model is more likely to create an attractor for the target shape. However, longer time periods substantially increase the training time and more importantly, the memory requirements, given that the entire episode’s intermediate activations must be stored in memory for a backwards-pass to occur.</p>
+<p>One strategy to solve this is letting the CA iterate for much a longer time and periodically applying the loss against the target, training the system by backpropagation through these longer time intervals. Intuitively we claim that with longer the time intervals and several applications of loss, the model is more likely to create an attractor for the target shape, as we iteratively mold the dynamics to return to the target pattern from wherever the system has decided to venture. However, longer time periods substantially increase the training time and more importantly, the memory requirements, given that the entire episode’s intermediate activations must be stored in memory for a backwards-pass to occur.</p>
 
 <p>Instead, we propose a “sample pool” based strategy to a similar effect. We define a pool of seed states to start the iterations from, initially filled with the single black pixel seed state. We then sample a batch from this pool which we use in our training step. To prevent the equivalent of “catastrophic forgetting” we replace one sample in this batch with the original, single-pixel seed state. After concluding the training step , we replace samples in the pool that were sampled for the batch with the output states from the training step over this batch. The animation below shows a random sample of the entries in the pool every 20 training steps.</p>
 <d-code block="" language="python">
@@ -677,8 +779,8 @@ Rotating the axis along which the perception step computes gradients brings abou
 
 <p>Here is the detailed explanation of controls available in the demo on top of this page:</p>
 <ul><li><strong>Target </strong>– selects one of a few models that is pre-trained to generate a specific image</li></ul>
-<ul><li><strong>Model type</strong> –<strong> </strong>selects between model variants that are trained following different procedures, described in the experiment sections 1-3.</li></ul>
-<ul><li><strong>Rotation</strong> – controls the rotation applied to the perceived activation gradients, as described in the experiment section 4.</li></ul>
+<ul><li><strong>Model type</strong> –<strong> </strong>selects between model variants that are trained following different procedures.</li></ul>
+<ul><li><strong>Rotation</strong> – controls the rotation applied to the perceived activation gradients.</li></ul>
 <ul><li><strong>Speed</strong> – controls the number of cellular automata steps simplation makes per frame. “Max” mode tries to load the GPU with as many iterations per second as possible. Use it cautiously, as it can result in reduction of the system performance.</li></ul>
 <h2 id='related-work'>Related work</h2>
 <h3>CA and PDEs</h3>
