@@ -230,7 +230,6 @@ input[type="radio"] {
   width: 200px;
   height: 16px;
 }
-
 </style>
 
 <div class="l-body-outset grid" id="demo">
@@ -270,27 +269,27 @@ input[type="radio"] {
             <input type="radio" name="model" id="ex3"> <label for="ex3">Regenerating</label><br>        
         </div>
         <div>
-            Rotation <span id="rotationLabel"></span><br>
+            Rotation <span id="rotationLabel"></span><span class="hint">&nbsp;&nbsp;<a href="#experiment-4">(experiment 4)</a></span>
+            <br>
             <input type="range" id="rotation" min="0" max="360" step="1" value="0"><br>
-            <div class="hint" style="text-align: center;">(<a href="#experiment-4">experiment 4)</a></div>
         </div>
         <div id='model-hints' class="hint">
             <span id="ex1-hint">
                 <b>Growing</b> models were trained to generate patterns, 
                 but don't know how to persist them. Some patterns explode, some decay,
                 but some happen to be almost stable or even regenerate parts!
-                (<a href="#experiment-1">experiment 1</a>)
+                <a href="#experiment-1">(experiment 1)</a>
             </span>
             <span id="ex2-hint">
                 <b>Persistent</b> models are trained to make the pattern stay for a prolonged
                 period of time. Interstingly, they often develop some regenerative
                 capabilities without being explicitly instructed to do so
-                (<a href="#experiment-2">experiment 2</a>).
+                <a href="#experiment-2">(experiment 2)</a>.
             </span>
             <span id="ex3-hint">
                 <b>Regenerating</b> models were subject to pattern damages duiring
                 training, so their regenerative capabilities are much stronger,
-                especially in the central area. (<a href="#experiment-3">experiment 3</a>)
+                especially in the central area. <a href="#experiment-3">(experiment 3)</a>
 
             </span>
         </div>
