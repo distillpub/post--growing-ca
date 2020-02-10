@@ -230,6 +230,10 @@ input[type="radio"] {
   width: 200px;
   height: 16px;
 }
+
+.hint a {
+  font-size: 90%;
+}
 </style>
 
 <div class="l-body-outset grid" id="demo">
@@ -268,8 +272,8 @@ input[type="radio"] {
             <input type="radio" name="model" id="ex2"> <label for="ex2">Persistent</label><br>
             <input type="radio" name="model" id="ex3"> <label for="ex3">Regenerating</label><br>        
         </div>
-        <div>
-            Rotation <span id="rotationLabel"></span><span class="hint">&nbsp;&nbsp;<a href="#experiment-4">(experiment 4)</a></span>
+        <div style="white-space: nowrap;">
+            Rotation <span id="rotationLabel"></span>&nbsp;<span class="hint"><a href="#experiment-4">(experiment 4)</a></span>
             <br>
             <input type="range" id="rotation" min="0" max="360" step="1" value="0"><br>
         </div>
@@ -294,7 +298,7 @@ input[type="radio"] {
             </span>
         </div>
         <div id="colab-hero-div">
-          <a href="https://colab.research.google.com/drive/1oqVn8ReE7vp77nQLSWAY3v3O_0y-n87Q#scrollTo=4O4tzfe-GRJ7" class="colab-root" id="colab-hero">Try in a <span class="colab-span">Notebook</span></a>
+          <a href="https://colab.research.google.com/github/google-research/self-organising-systems/blob/master/notebooks/growing_ca.ipynb" class="colab-root" id="colab-hero">Try in a <span class="colab-span">Notebook</span></a>
         </div>
     </div>
 </div>
