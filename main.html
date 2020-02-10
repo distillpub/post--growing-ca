@@ -214,7 +214,7 @@
   // hack to edit font size in code snippets. guaranteed a better way to do 
   // this, but I'm not a webdev
   window.onload = function() {
-    document.querySelectorAll("d-code").forEach(function(e) {e.shadowRoot.querySelector('#code-container').style.fontSize = "0.7em"});
+    setTimeout(() => { document.querySelectorAll("d-code").forEach(function(e) {e.shadowRoot.querySelector('#code-container').style.fontSize = "0.7em"}); }, 3000);
   }
   </script>
   <d-title>
