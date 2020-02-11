@@ -16,7 +16,7 @@
   <d-front-matter>
     <script type="text/json">{
       "title": "Growing Neural Cellular Automata",
-      "description": "Differentiable Self-Organisation: A Cellular Automata model of Morphogenesis.",
+      "description": "Training an end-to-end differentiable, self-organising cellular automata model of morphogenesis, able to both grow and regenerate specific patterns.",
       "authors": [
         {
           "author": "Alexander Mordvintsev",
@@ -520,7 +520,7 @@ input[type="radio"] {
                 <a href="#experiment-2">[experiment 2]</a>.
             </span>
             <span id="ex3-hint">
-                <b>Regenerating</b> models were subject to pattern damages duiring
+                <b>Regenerating</b> models were subject to pattern damages during
                 training, so their regenerative capabilities are much stronger,
                 especially in the central area. <a href="#experiment-3">[experiment 3]</a>
 
@@ -740,7 +740,7 @@ input[type="radio"] {
   Patterns exhibit some regenerative properties upon being damaged, but not full re-growth. <br><br> <a href="https://colab.research.google.com/github/google-research/self-organising-systems/blob/master/notebooks/growing_ca.ipynb#scrollTo=S5JRLGxX1dnX" class="colab-root">Reproduce in a <span class="colab-span">Notebook</span></a>
   </figcaption>
 </figure></p>
-<p>The animation above shows three different models trained using the same settings. We let each of models develop a pattern over 100 steps, then damage the final state in five different ways: by removing different halves of the formed pattern, and by cutting out a square from the center. Once again, we see that these models show quite different out-of-training mode behaviour. For example “the lizard” develops quite strong regenerative capabilities, without being explicitly trained for it! </p>
+<p>The animation above shows three different models trained using the same settings. We let each of the models develop a pattern over 100 steps, then damage the final state in five different ways: by removing different halves of the formed pattern, and by cutting out a square from the center. Once again, we see that these models show quite different out-of-training mode behaviour. For example “the lizard” develops quite strong regenerative capabilities, without being explicitly trained for it! </p>
 
 <p>Since we trained our coupled system of cells to generate an attractor towards a target shape from a single cell, it was likely that these systems, once damaged, would generalize towards non-self-destructive reactions. That’s because the systems were trained to grow, stabilize, and never entirely self-destruct. Some of these systems might naturally gravitate towards regenerative capabilities, but nothing stops them from developing different behaviors such as explosive mitoses (uncontrolled growth), unresponsiveness to damage (overstabilization), or even self destruction, especially for the more severe types of damage.</p>
 
@@ -858,5 +858,6 @@ Regeneration-capable 2-headed planarian, the creature that inspired this work <d
 <d-footnote-list></d-footnote-list>
 <d-citation-list></d-citation-list>
 <d-appendix>
+
   <d-bibliography src="bibliography.bib"></d-bibliography>
 </body>
