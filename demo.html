@@ -110,9 +110,19 @@
 
 input[type=range] {
   -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
-  width: 98%; /* Specific width is required for Firefox. */
+  width: 95%; /* Specific width is required for Firefox. */
   background: transparent; /* Otherwise white in Chrome */
   margin-bottom: 8px;
+}
+
+.hint a {
+  font-size: 90%;
+}
+
+@media (max-width: 350px) {
+  .hint a {
+    font-size: 75%;
+  }
 }
 
 input[type=range]::-webkit-slider-thumb {
@@ -231,9 +241,6 @@ input[type="radio"] {
   height: 16px;
 }
 
-.hint a {
-  font-size: 90%;
-}
 </style>
 
 <div class="l-body-outset grid" id="demo">
@@ -273,7 +280,7 @@ input[type="radio"] {
             <input type="radio" name="model" id="ex3"> <label for="ex3">Regenerating</label><br>        
         </div>
         <div style="white-space: nowrap;">
-            Rotation <span id="rotationLabel"></span>&nbsp;<span class="hint"><a href="#experiment-4">(experiment 4)</a></span>
+            Rotation <span id="rotationLabel"></span>&nbsp;<span class="hint"><a href="#experiment-4">[experiment 4]</a></span>
             <br>
             <input type="range" id="rotation" min="0" max="360" step="1" value="0"><br>
         </div>
@@ -282,18 +289,18 @@ input[type="radio"] {
                 <b>Growing</b> models were trained to generate patterns, 
                 but don't know how to persist them. Some patterns explode, some decay,
                 but some happen to be almost stable or even regenerate parts!
-                <a href="#experiment-1">(experiment 1)</a>
+                <a href="#experiment-1">[experiment 1]</a>
             </span>
             <span id="ex2-hint">
                 <b>Persistent</b> models are trained to make the pattern stay for a prolonged
                 period of time. Interstingly, they often develop some regenerative
                 capabilities without being explicitly instructed to do so
-                <a href="#experiment-2">(experiment 2)</a>.
+                <a href="#experiment-2">[experiment 2]</a>.
             </span>
             <span id="ex3-hint">
                 <b>Regenerating</b> models were subject to pattern damages duiring
                 training, so their regenerative capabilities are much stronger,
-                especially in the central area. <a href="#experiment-3">(experiment 3)</a>
+                especially in the central area. <a href="#experiment-3">[experiment 3]</a>
 
             </span>
         </div>
