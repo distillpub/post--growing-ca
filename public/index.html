@@ -632,7 +632,7 @@ input[type="radio"] {
 <p><strong>Stochastic cell update.</strong> Typical cellular automata update all cells simultaneously. This implies the existence of a global clock, synchronizing all cells. Relying on global synchronisation is not something one expects from a self-organising system. We relax this requirement by assuming that each cell performs an update independently, waiting for a random time interval between updates. To model this behaviour we apply a random per-cell mask to update vectors, setting all update values to zero with some predefined probability (we use 0.5 during training). This operation can be also seen as an application of per-cell dropout to update vectors.</p>
 
 <d-code block="" language="python">
-<p>def stochastic_update(state_grid, dy_grid):</p>
+<p>def stochastic_update(state_grid, ds_grid):</p>
 <p>  # Zero out a random fraction of the updates.</p>
 <p>  rand_mask = cast(random(64, 64) < 0.5, float32)</p>
 <p>  ds_grid = ds_grid * rand_mask</p>
