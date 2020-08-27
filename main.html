@@ -1,66 +1,157 @@
-<!doctype html>
+<!DOCTYPE html>
 
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://distill.pub/template.v2.js"></script>
-  <style>
-  </style>
+  <style></style>
   <script src="twgl.min.js"></script>
   <script type="module" src="./ca.js"></script>
   <script type="module" src="./demo.js"></script>
 </head>
 
 <body>
-
   <d-front-matter>
-    <script type="text/json">{
-      "title": "Growing Neural Cellular Automata",
-      "description": "Training an end-to-end differentiable, self-organising cellular automata model of morphogenesis, able to both grow and regenerate specific patterns.",
-      "authors": [
-        {
-          "author": "Alexander Mordvintsev",
-          "authorURL": "https://znah.net/",
-          "affiliation": "Google",
-          "affiliationURL": "https://ai.google/"
-        },
-        {
-          "author": "Ettore Randazzo",
-          "authorURL": "",
-          "affiliation": "Google",
-          "affiliationURL": "https://ai.google/"
-        },
-        {
-          "author": "Eyvind Niklasson",
-          "authorURL": "https://eyvind.me/",
-          "affiliation": "Google",
-          "affiliationURL": "https://ai.google/"
-        },
-        {
-          "author": "Michael Levin",
-          "authorURL": "http://www.drmichaellevin.org",
-          "affiliation": "Allen Discovery Center at Tufts University",
-          "affiliationURL": "http://allencenter.tufts.edu"
-        }
-      ],
-      "katex": {
-        "delimiters": [
+    <script type="text/json">
+      {
+        "title": "Growing Neural Cellular Automata",
+        "description": "Training an end-to-end differentiable, self-organising cellular automata model of morphogenesis, able to both grow and regenerate specific patterns.",
+        "authors": [
           {
-            "left": "$",
-            "right": "$",
-            "display": false
+            "author": "Alexander Mordvintsev",
+            "authorURL": "https://znah.net/",
+            "affiliation": "Google",
+            "affiliationURL": "https://ai.google/"
           },
           {
-            "left": "$$",
-            "right": "$$",
-            "display": true
+            "author": "Ettore Randazzo",
+            "authorURL": "",
+            "affiliation": "Google",
+            "affiliationURL": "https://ai.google/"
+          },
+          {
+            "author": "Eyvind Niklasson",
+            "authorURL": "https://eyvind.me/",
+            "affiliation": "Google",
+            "affiliationURL": "https://ai.google/"
+          },
+          {
+            "author": "Michael Levin",
+            "authorURL": "http://www.drmichaellevin.org",
+            "affiliation": "Allen Discovery Center at Tufts University",
+            "affiliationURL": "http://allencenter.tufts.edu"
           }
-        ]
+        ],
+        "katex": {
+          "delimiters": [
+            {
+              "left": "$",
+              "right": "$",
+              "display": false
+            },
+            {
+              "left": "$$",
+              "right": "$$",
+              "display": true
+            }
+          ]
+        }
       }
-    }</script>
+    </script>
   </d-front-matter>
 
   <style>
+    /* ****************************************
+       * Thread Info
+       ******************************************/
+
+    .thread-info {
+      background-color: hsl(54, 78%, 96%);
+      border-left: solid hsl(54, 33%, 67%) 1px;
+      padding: 1em;
+      color: hsla(0, 0%, 0%, 0.67);
+    }
+
+    #thread-nav {
+      margin-top: 20;
+      margin-bottom: 1.5rem;
+      display: grid;
+      grid-template-columns: 45px 2fr 3fr;
+      grid-template-areas:
+        'thread-icon explanation explanation '
+        'thread-icon prev next';
+      grid-column-gap: 1.5em;
+    }
+
+    @media (min-width: 768px) {
+      #thread-nav {
+        grid-template-columns: 65px 3fr 2fr;
+      }
+    }
+
+    #thread-nav .thread-icon {
+      grid-area: thread-icon;
+      padding: 0.5em;
+      justify-self: center;
+    }
+
+    #thread-nav .explanation {
+      grid-area: explanation;
+      font-size: 85%;
+      color: hsl(0, 0%, 0.33);
+    }
+
+    #thread-nav .prev {
+      grid-area: prev;
+    }
+
+    #thread-nav .prev::before {
+      content: '← Previous Article';
+    }
+
+    #thread-nav .overview {
+      scroll-behavior: smooth;
+    }
+
+    #thread-nav .overview::before {
+      content: '↑';
+      white-space: nowrap;
+      margin-right: 0.5em;
+    }
+
+    #thread-nav .next {
+      grid-area: next;
+      scroll-behavior: smooth;
+    }
+
+    #thread-nav .next::before {
+      content: 'Next Article →';
+    }
+
+    #thread-nav .next::before,
+    #thread-nav .prev::before {
+      display: block;
+      white-space: nowrap;
+      padding: 0.5em 0;
+      font-size: 80%;
+      font-weight: bold;
+      margin-top: 0px;
+      margin-right: 0.5em;
+      text-transform: uppercase;
+    }
+
+    #thread-nav .prev,
+    #thread-nav .next,
+    #thread-nav .overview {
+      font-size: 80%;
+      line-height: 1.5em;
+      font-weight: 600;
+      border-bottom: none;
+      color: #2e6db7;
+      /* margin-top: 0.25em; */
+      letter-spacing: 0.25px;
+    }
+
     figure {
       text-align: center;
       margin-bottom: 0.5em;
@@ -78,7 +169,7 @@
       background: rgba(255, 255, 255, 0.75);
       padding: 4px 8px;
       border-radius: 4px;
-      font-size: 11px!important;
+      font-size: 11px !important;
       text-decoration: none;
       color: #aaa;
       border: none;
@@ -89,7 +180,7 @@
       line-height: 16px;
     }
 
-   span.colab-span {
+    span.colab-span {
       background-image: url(images/colab.svg);
       background-repeat: no-repeat;
       background-size: 20px;
@@ -100,14 +191,14 @@
       text-decoration: none;
     }
 
-    a.colab-root:hover{
+    a.colab-root:hover {
       color: #666;
       background: white;
       border-color: rgba(0, 0, 0, 0.2);
     }
 
     /* TOC */
-    @media(max-width: 1000px){
+    @media (max-width: 1000px) {
       d-contents {
         justify-self: start;
         align-self: start;
@@ -121,9 +212,9 @@
         border-bottom-style: solid;
         border-bottom-color: rgba(0, 0, 0, 0.1);
       }
-    } 
-    
-    @media (min-width: 1000px){
+    }
+
+    @media (min-width: 1000px) {
       d-contents {
         align-self: start;
         grid-column-start: 1;
@@ -138,7 +229,7 @@
       }
     }
 
-    @media (min-width: 1180px){
+    @media (min-width: 1180px) {
       d-contents {
         grid-column-start: 1;
         grid-column-end: 4;
@@ -170,9 +261,9 @@
     d-contents ul {
       padding-left: 1em;
     }
-    
+
     d-contents nav ul li {
-      margin-bottom: .25em;
+      margin-bottom: 0.25em;
     }
 
     d-contents nav a:hover {
@@ -184,21 +275,20 @@
       margin-bottom: 6px;
     }
 
-
-    d-contents nav>div {
+    d-contents nav > div {
       display: block;
       outline: none;
       margin-bottom: 0.5em;
     }
 
-    d-contents nav>div>a {
+    d-contents nav > div > a {
       font-size: 13px;
       font-weight: 600;
     }
 
-    d-contents nav>div>a:hover,
-    d-contents nav>ul>li>a:hover {
-        text-decoration: none;
+    d-contents nav > div > a:hover,
+    d-contents nav > ul > li > a:hover {
+      text-decoration: none;
     }
 
     /* code blocks to margins */
@@ -206,34 +296,36 @@
       d-code {
         margin-top: -10px;
         grid-column-start: 12;
-        grid-column-end: 14; 
+        grid-column-end: 14;
       }
     }
     /* so title is on one line */
-    d-title h1, d-title p {
+    d-title h1,
+    d-title p {
       grid-column: middle;
     }
-
   </style>
   <script>
-  // hack to edit font size in code snippets. guaranteed a better way to do 
-  // this, but I'm not a webdev
-  window.onload = function() {
-    setTimeout(() => { document.querySelectorAll("d-code").forEach(function(e) {e.shadowRoot.querySelector('#code-container').style.fontSize = "0.7em"}); }, 3000);
-  }
+    // hack to edit font size in code snippets. guaranteed a better way to do
+    // this, but I'm not a webdev
+    window.onload = function () {
+      setTimeout(() => {
+        document.querySelectorAll('d-code').forEach(function (e) {
+          e.shadowRoot.querySelector('#code-container').style.fontSize = '0.7em'
+        })
+      }, 3000)
+    }
   </script>
   <d-title>
     <h1>Growing Neural Cellular Automata</h1>
     <p>Differentiable Model of Morphogenesis</p>
 
-%% demo.html
+    %% demo.html
+  </d-title>
 
-</d-title>
+  <d-byline></d-byline>
 
-<d-byline></d-byline>
-
-
-%% article.html
+  %% article.html
 
   <d-bibliography src="bibliography.bib"></d-bibliography>
 </body>
